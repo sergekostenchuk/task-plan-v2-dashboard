@@ -1,0 +1,92 @@
+{
+  "panelTitle": "Панель Task Plan",
+  "pickPlanOpenLabel": "Использовать TASK-PLAN.md",
+  "warningNoPlan": "Расширение Task Plan Dashboard не нашло файл TASK-PLAN.md. Сначала выполните команду 'Task Plan: Pick Plan File'.",
+  "warningFeaturePrepMissing": "Файл feature preparation рядом с планом не найден.",
+  "warningArtifactMissingPrefix": "Артефакт не найден:",
+  "tree": {
+    "openDashboard": "Открыть Dashboard",
+    "openDashboardDescription": "Открыть полную панель наблюдаемости",
+    "openDemoWorkspace": "Открыть Demo Workspace",
+    "openDemoWorkspaceDescription": "Открыть подготовленный английский demo workspace",
+    "noPlanFound": "Файл TASK-PLAN.md не найден",
+    "noPlanFoundDescription": "Используйте команду 'Pick Plan File' или откройте demo workspace",
+    "prepSummary": "Готовность {percent}% · задач: {total}",
+    "openPlanFileTitle": "Открыть файл плана",
+    "openDashboardForTaskTitle": "Открыть Dashboard для задачи"
+  },
+  "statusLabels": {
+    "draft": "Черновик",
+    "ready": "Готово",
+    "in_progress": "В работе",
+    "blocked": "Заблокировано",
+    "needs_review": "Нужно ревью",
+    "approved": "Одобрено",
+    "done": "Сделано",
+    "dropped": "Отброшено"
+  },
+  "webview": {
+    "buttons": {
+      "openPlan": "Открыть TASK-PLAN.md",
+      "openFeaturePrep": "Открыть Feature Preparation",
+      "refresh": "Обновить"
+    },
+    "sections": {
+      "kanban": "Канбан",
+      "dependencyGraph": "Граф зависимостей",
+      "selectedTask": "Выбранная задача",
+      "ownerBreakdown": "Распределение владельцев",
+      "eventTimeline": "Лента событий"
+    },
+    "hints": {
+      "kanban": "Статусы, текущие владельцы, approvals, зависимости и следующая роль",
+      "dependencyGraph": "Критический путь и блокеры из канонического Markdown-плана",
+      "selectedTask": "Нажмите на карточку или узел графа, чтобы посмотреть детали",
+      "ownerBreakdown": "Текущая активная роль по задачам",
+      "eventTimeline": "Последние события агентов из .task-plan/events.jsonl"
+    },
+    "heroFallbackTitle": "Панель Task Plan",
+    "heroFallbackSubtitle": "Отслеживайте multi-agent progress по каноническому TASK-PLAN.md, review/test gates, зависимостям и артефактам.",
+    "summary": {
+      "tasks": "Задачи",
+      "tasksHint": "Общее число task blocks в TASK-PLAN.md",
+      "done": "Сделано",
+      "doneHint": "Полностью закрытые задачи",
+      "reviewQueue": "Очередь на ревью",
+      "reviewQueueHint": "Задачи, ожидающие reviewer или помеченные как needs_review",
+      "testQueue": "Очередь на тесты",
+      "testQueueHint": "Задачи, которыми владеет tester, или задачи в approved перед тестированием",
+      "blocked": "Блокеры",
+      "blockedHint": "Задачи с активными блокерами",
+      "featurePrep": "Готовность фичи",
+      "featurePrepHintTemplate": "Заполнено {checked}/{total} пунктов checklist"
+    },
+    "kanban": {
+      "approvals": "Approvals",
+      "dependencies": "Зависимости",
+      "next": "Дальше",
+      "noTasks": "Нет задач"
+    },
+    "task": {
+      "selectHint": "Выберите задачу, чтобы посмотреть детали.",
+      "status": "Статус",
+      "goal": "Цель",
+      "dependencies": "Зависимости",
+      "blockedBy": "Чем заблокирована",
+      "approvals": "Approvals",
+      "agentSequence": "Последовательность агентов",
+      "acceptanceChecks": "Acceptance Checks",
+      "commandsRun": "Выполненные команды",
+      "risks": "Риски",
+      "artifacts": "Артефакты",
+      "noGoalRecorded": "Цель не записана",
+      "noRationaleRecorded": "Обоснование не записано",
+      "nextRole": "Следующая роль",
+      "none": "Нет",
+      "noArtifactLocations": "Ссылки на артефакты не записаны"
+    },
+    "timeline": {
+      "nextPrefix": "дальше"
+    }
+  }
+}

@@ -1,0 +1,115 @@
+{
+  "name": "task-plan-dashboard",
+  "displayName": "Task Plan Dashboard",
+  "description": "Track TASK-PLAN v2 progress in Antigravity with status groups, dependency graph, review/test gates, and agent event timeline.",
+  "version": "1.0.0",
+  "publisher": "local",
+  "engines": {
+    "vscode": "^1.107.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:taskPlanDashboardView",
+    "onCommand:taskPlanDashboard.openDashboard",
+    "onCommand:taskPlanDashboard.refresh",
+    "onCommand:taskPlanDashboard.pickPlanFile",
+    "onCommand:taskPlanDashboard.openDemoWorkspace"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "taskPlanDashboard.openDashboard",
+        "title": "Task Plan: Open Dashboard"
+      },
+      {
+        "command": "taskPlanDashboard.refresh",
+        "title": "Task Plan: Refresh"
+      },
+      {
+        "command": "taskPlanDashboard.pickPlanFile",
+        "title": "Task Plan: Pick Plan File"
+      },
+      {
+        "command": "taskPlanDashboard.openPlanFile",
+        "title": "Task Plan: Open Plan File"
+      },
+      {
+        "command": "taskPlanDashboard.openFeaturePrep",
+        "title": "Task Plan: Open Feature Prep"
+      },
+      {
+        "command": "taskPlanDashboard.openDemoWorkspace",
+        "title": "Task Plan: Open Demo Workspace"
+      },
+      {
+        "command": "taskPlanDashboard.openDashboardForTask",
+        "title": "Task Plan: Open Dashboard For Task"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "taskPlanDashboardContainer",
+          "title": "Task Plan",
+          "icon": "resources/task-plan-dashboard.svg"
+        }
+      ]
+    },
+    "views": {
+      "taskPlanDashboardContainer": [
+        {
+          "id": "taskPlanDashboardView",
+          "name": "Task Progress"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "taskPlanDashboard.openDashboard",
+          "when": "view == taskPlanDashboardView",
+          "group": "navigation@1"
+        },
+        {
+          "command": "taskPlanDashboard.refresh",
+          "when": "view == taskPlanDashboardView",
+          "group": "navigation@2"
+        },
+        {
+          "command": "taskPlanDashboard.pickPlanFile",
+          "when": "view == taskPlanDashboardView",
+          "group": "navigation@3"
+        },
+        {
+          "command": "taskPlanDashboard.openDemoWorkspace",
+          "when": "view == taskPlanDashboardView",
+          "group": "navigation@4"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Task Plan Dashboard",
+      "properties": {
+        "taskPlanDashboard.planPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional absolute path to the canonical TASK-PLAN.md file to use when auto-discovery should be overridden."
+        },
+        "taskPlanDashboard.language": {
+          "type": "string",
+          "default": "auto",
+          "enum": [
+            "auto",
+            "en",
+            "ru"
+          ],
+          "description": "Dashboard language. Use 'auto' to follow the Antigravity UI language, or force English/Russian explicitly."
+        }
+      }
+    }
+  }
+}

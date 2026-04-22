@@ -1,0 +1,22 @@
+{"ts":"2026-04-22T09:00:00Z","task_id":"T-001","role":"planner","event":"ready","summary":"Parser core accepted into the milestone."}
+{"ts":"2026-04-22T09:12:00Z","task_id":"T-001","role":"implementer","event":"started","summary":"Line-oriented task block parser implementation started."}
+{"ts":"2026-04-22T09:28:00Z","task_id":"T-001","role":"implementer","event":"handoff","summary":"Parser core implemented and handed to reviewer.","next_role":"reviewer","path":"artifacts/T-001/impl-summary.md"}
+{"ts":"2026-04-22T09:34:00Z","task_id":"T-001","role":"reviewer","event":"approved","summary":"Parser scope and task extraction look correct.","next_role":"tester","path":"artifacts/T-001/review-note.md"}
+{"ts":"2026-04-22T09:41:00Z","task_id":"T-001","role":"tester","event":"tests_passed","summary":"Smoke parser checks passed.","next_role":"docs_sync","path":"artifacts/T-001/parser-smoke.log"}
+{"ts":"2026-04-22T09:46:00Z","task_id":"T-001","role":"docs_sync","event":"completed","summary":"Parser artifacts synced and task closed."}
+{"ts":"2026-04-22T10:00:00Z","task_id":"T-002","role":"implementer","event":"started","summary":"Event feed reader implementation started."}
+{"ts":"2026-04-22T10:19:00Z","task_id":"T-002","role":"reviewer","event":"approved","summary":"JSONL reader accepted after malformed-line guard was added.","next_role":"tester","path":"artifacts/T-002/review-note.md"}
+{"ts":"2026-04-22T10:24:00Z","task_id":"T-002","role":"tester","event":"tests_passed","summary":"Event smoke log confirms ordering and latest-event mapping.","next_role":"docs_sync","path":"artifacts/T-002/events-smoke.log"}
+{"ts":"2026-04-22T10:28:00Z","task_id":"T-002","role":"docs_sync","event":"completed","summary":"Event schema documented and task closed.","path":"artifacts/T-002/event-schema.md"}
+{"ts":"2026-04-22T10:36:00Z","task_id":"T-009","role":"implementer","event":"started","summary":"Demo plan and artifact fixture files being seeded."}
+{"ts":"2026-04-22T10:55:00Z","task_id":"T-009","role":"tester","event":"tests_passed","summary":"Manual walkthrough shows all dashboard panels have data.","next_role":"docs_sync","path":"artifacts/T-009/demo-checklist.md"}
+{"ts":"2026-04-22T10:59:00Z","task_id":"T-009","role":"docs_sync","event":"completed","summary":"Demo fixture frozen for installation."}
+{"ts":"2026-04-22T11:07:00Z","task_id":"T-003","role":"implementer","event":"handoff","summary":"Activity bar tree view complete and passed to reviewer.","next_role":"reviewer"}
+{"ts":"2026-04-22T11:15:00Z","task_id":"T-003","role":"reviewer","event":"approved","summary":"Tree view grouping accepted. Waiting on tester pass.","next_role":"tester","path":"artifacts/T-003/review-note.md"}
+{"ts":"2026-04-22T11:26:00Z","task_id":"T-004","role":"implementer","event":"started","summary":"Webview shell currently being integrated.","path":"artifacts/T-004/current-notes.md"}
+{"ts":"2026-04-22T11:39:00Z","task_id":"T-005","role":"implementer","event":"handoff","summary":"Kanban rendering ready for review.","next_role":"reviewer","path":"artifacts/T-005/kanban-qa.md"}
+{"ts":"2026-04-22T11:44:00Z","task_id":"T-005","role":"reviewer","event":"changes_requested","summary":"Reduce card density and confirm selected-state contrast.","path":"artifacts/T-005/review-request.md"}
+{"ts":"2026-04-22T11:51:00Z","task_id":"T-006","role":"implementer","event":"blocked","summary":"Graph edge routing polish unresolved. Task blocked until readability rules are set.","path":"artifacts/T-006/blocker-note.md"}
+{"ts":"2026-04-22T12:01:00Z","task_id":"T-007","role":"planner","event":"ready","summary":"Review queue analytics accepted into the next implementation slice.","next_role":"implementer","path":"artifacts/T-007/analytics-note.md"}
+{"ts":"2026-04-22T12:06:00Z","task_id":"T-008","role":"planner","event":"drafted","summary":"Test queue analytics left in draft pending rules."}
+{"ts":"2026-04-22T12:10:00Z","task_id":"T-010","role":"planner","event":"dropped","summary":"Transcript auto-sync spike removed from v1 to keep Markdown authoritative.","path":"artifacts/T-010/drop-note.md"}

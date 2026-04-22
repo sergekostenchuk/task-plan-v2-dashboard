@@ -1,0 +1,92 @@
+{
+  "panelTitle": "Task Plan Dashboard",
+  "pickPlanOpenLabel": "Use TASK-PLAN.md",
+  "warningNoPlan": "Task Plan Dashboard could not find a TASK-PLAN.md file. Use 'Task Plan: Pick Plan File' first.",
+  "warningFeaturePrepMissing": "Feature preparation file was not found next to the plan.",
+  "warningArtifactMissingPrefix": "Artifact not found:",
+  "tree": {
+    "openDashboard": "Open Dashboard",
+    "openDashboardDescription": "Open the full dashboard",
+    "openDemoWorkspace": "Open Demo Workspace",
+    "openDemoWorkspaceDescription": "Load the prepared English demo",
+    "noPlanFound": "No TASK-PLAN.md found",
+    "noPlanFoundDescription": "Use 'Pick Plan File' or open the demo workspace",
+    "prepSummary": "Prep {percent}% · {total} tasks",
+    "openPlanFileTitle": "Open Plan File",
+    "openDashboardForTaskTitle": "Open Dashboard For Task"
+  },
+  "statusLabels": {
+    "draft": "Draft",
+    "ready": "Ready",
+    "in_progress": "In Progress",
+    "blocked": "Blocked",
+    "needs_review": "Needs Review",
+    "approved": "Approved",
+    "done": "Done",
+    "dropped": "Dropped"
+  },
+  "webview": {
+    "buttons": {
+      "openPlan": "Open TASK-PLAN.md",
+      "openFeaturePrep": "Open Feature Preparation",
+      "refresh": "Refresh"
+    },
+    "sections": {
+      "kanban": "Kanban",
+      "dependencyGraph": "Dependency Graph",
+      "selectedTask": "Selected Task",
+      "ownerBreakdown": "Owner Breakdown",
+      "eventTimeline": "Event Timeline"
+    },
+    "hints": {
+      "kanban": "Statuses, current owners, approvals, dependencies, and next-role hints",
+      "dependencyGraph": "Critical path and blockers from the canonical Markdown plan",
+      "selectedTask": "Click a card or graph node to inspect details",
+      "ownerBreakdown": "Current active role per task",
+      "eventTimeline": "Recent agent events from .task-plan/events.jsonl"
+    },
+    "heroFallbackTitle": "Task Plan Dashboard",
+    "heroFallbackSubtitle": "Track multi-agent progress over the canonical TASK-PLAN.md, review/test gates, dependencies, and artifacts.",
+    "summary": {
+      "tasks": "Tasks",
+      "tasksHint": "Total task blocks in TASK-PLAN.md",
+      "done": "Done",
+      "doneHint": "Tasks fully closed",
+      "reviewQueue": "Review Queue",
+      "reviewQueueHint": "Tasks waiting on reviewer or marked needs_review",
+      "testQueue": "Test Queue",
+      "testQueueHint": "Tasks owned by tester or approved for testing",
+      "blocked": "Blocked",
+      "blockedHint": "Tasks with active blockers",
+      "featurePrep": "Feature Prep",
+      "featurePrepHintTemplate": "{checked}/{total} checklist items complete"
+    },
+    "kanban": {
+      "approvals": "Approvals",
+      "dependencies": "Dependencies",
+      "next": "Next",
+      "noTasks": "No tasks"
+    },
+    "task": {
+      "selectHint": "Select a task to inspect details.",
+      "status": "Status",
+      "goal": "Goal",
+      "dependencies": "Dependencies",
+      "blockedBy": "Blocked By",
+      "approvals": "Approvals",
+      "agentSequence": "Agent Sequence",
+      "acceptanceChecks": "Acceptance Checks",
+      "commandsRun": "Commands Run",
+      "risks": "Risks",
+      "artifacts": "Artifacts",
+      "noGoalRecorded": "No goal recorded",
+      "noRationaleRecorded": "No rationale recorded",
+      "nextRole": "Next role",
+      "none": "None",
+      "noArtifactLocations": "No artifact locations recorded"
+    },
+    "timeline": {
+      "nextPrefix": "next"
+    }
+  }
+}
