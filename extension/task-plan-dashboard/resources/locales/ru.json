@@ -61,7 +61,9 @@
       "blocked": "Блокеры",
       "blockedHint": "Задачи с активными блокерами",
       "featurePrep": "Готовность фичи",
-      "featurePrepHintTemplate": "Заполнено {checked}/{total} пунктов checklist"
+      "featurePrepHintTemplate": "Заполнено {checked}/{total} пунктов checklist",
+      "governanceWarnings": "Governance warnings",
+      "governanceWarningsHint": "Задачи с пропущенной verification, sync или closure-дисциплиной"
     },
     "kanban": {
       "approvals": "Approvals",
@@ -79,13 +81,24 @@
       "agentSequence": "Последовательность агентов",
       "acceptanceChecks": "Acceptance Checks",
       "commandsRun": "Выполненные команды",
+      "commandsPlanned": "Запланированные команды",
+      "verificationStrategy": "Verification Strategy",
+      "testLevels": "Уровни тестов",
+      "testTargets": "Цели тестов",
+      "testDataOrigin": "Источник тестовых данных",
+      "oracle": "Oracle успеха",
+      "negativeTests": "Negative tests",
+      "flakinessRisk": "Риск flaky-тестов",
+      "stopOnFailure": "Остановить при падении",
+      "governanceIssues": "Governance issues",
       "risks": "Риски",
       "artifacts": "Артефакты",
       "noGoalRecorded": "Цель не записана",
       "noRationaleRecorded": "Обоснование не записано",
       "nextRole": "Следующая роль",
       "none": "Нет",
-      "noArtifactLocations": "Ссылки на артефакты не записаны"
+      "noArtifactLocations": "Ссылки на артефакты не записаны",
+      "noGovernanceIssues": "Governance issues не обнаружены"
     },
     "executionState": {
       "noState": "Состояние исполнения не записано",

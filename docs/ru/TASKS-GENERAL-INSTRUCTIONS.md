@@ -558,6 +558,46 @@ Review gate пройден, задача может идти в тестиров
 
 Если `stop_on_failure: true`, то падение обязательной проверки блокирует закрытие задачи.
 
+## 11.1. Verification Strategy
+
+Тесты нужно назначать на этапе планирования, до реализации.
+
+Распределение ответственности:
+
+- `planner` заполняет `tests_required`, `test_levels`, `test_targets`, `test_data_origin`, `oracle`, `negative_tests`, `flakiness_risk`, `stop_on_failure`, `commands_planned`.
+- `reviewer` проверяет, что эта стратегия реально доказывает acceptance criteria.
+- `tester` выполняет запланированные проверки и заполняет `commands_run` и `test_artifacts`.
+- `implementer` не имеет права молча ослаблять или заменять тестовую стратегию после написания кода.
+
+Важное различие:
+
+- `commands_planned` означает “это планируем запустить”.
+- `commands_run` означает “это реально было запущено”.
+
+Задача не должна становиться `done`, если `tests_required: yes`, а `commands_run` пустой.
+
+## 11.2. Execution Governance
+
+`Execution Governance` это анти-фейковый слой против premature DONE.
+
+В него нужно включить:
+
+- `NO-FICTION`
+- `INVALID_INPUT`
+- prompt-first
+- code-first
+- strict DONE
+- hash verification
+- sync-audit
+- boundary-audit
+- rollback/reopened
+- timeout/escalation
+- separate implementation/docs-sync evidence
+
+Практическое правило:
+
+- dashboard может визуализировать прогресс, но план всё равно должен доказывать, что работа реально выполнена.
+
 ## 12. Как работает review gate
 
 Review gate нужен для защиты от premature DONE.

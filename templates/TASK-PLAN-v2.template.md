@@ -76,6 +76,93 @@ status_legend:
 - done
 - dropped
 
+## Execution Governance
+
+mode: CODE-FIRST, NO-FICTION, ONE-TASK-ONLY
+no_fiction_policy:
+- if required input is missing, return INVALID_INPUT instead of guessing
+- do not invent files, commits, test results, approvals, blockers, or artifact paths
+- use unknown only for non-critical fields
+- critical unknowns block ready, in_progress, approved, and done
+placeholder_policy:
+- TBD is allowed only while task status is draft
+- ready or in_progress is forbidden if critical fields are TBD
+- placeholder evidence is forbidden
+- placeholder tests are forbidden
+- placeholder artifact paths are forbidden
+prompt_policy:
+- one task equals one prompt
+- prompt must exist before in_progress
+- prompt must include RESUME_FROM
+- prompt must include scope_in, scope_out, forbidden_areas, and verification_strategy
+code_first_policy:
+- implementation tasks require code progress before docs-sync closure
+- docs-only closure is allowed only for docs-governance tasks
+- planning-only work cannot close implementation tasks
+done_policy:
+- dependencies are done or explicitly accepted as pending external dependency
+- required approvals passed
+- verification_strategy executed
+- commands_run recorded
+- test_artifacts recorded when tests_required is yes
+- review_artifacts recorded
+- rollback_plan exists
+- Task Register and Task Block are synchronized
+- no forbidden_areas touched
+commit_policy:
+- implementation tasks require implementation evidence
+- docs sync is separate from implementation evidence
+- commit hashes must be verified with rev-parse
+- commit hashes must be reachable from HEAD
+- full SHA belongs in evidence; short SHA belongs in register columns if used
+sync_audit_policy:
+- Task Register status must match Task Block status
+- owner_role must match active execution state
+- dependencies and unblocks must be bidirectional
+- dashboard events must not contradict TASK-PLAN.md
+boundary_audit_policy:
+- forbidden_areas must be checked before done
+- changes outside scope require reviewer approval
+- scope violation moves task to needs_review or blocked
+rollback_policy:
+- failed required checks cannot go to done
+- choose REVERT or FORWARD_FIX
+- reopened tasks require updated prompt and new RESUME_FROM
+- direct reopened to done is forbidden
+timeout_escalation_policy:
+- in_progress over timebox requires escalation
+- max_review_loops exceeded requires escalation
+- blocked_by must be explicit
+
+## Verification Policy
+
+verification_planning_rule:
+- planner defines verification_strategy before implementer starts
+- reviewer validates verification_strategy before code-review approval
+- tester executes planned checks and records commands_run plus test_artifacts
+- implementer must not silently weaken planned tests after coding
+critical_verification_fields:
+- tests_required
+- test_levels
+- test_targets
+- test_data_origin
+- oracle
+- stop_on_failure
+- commands_planned
+test_level_enum:
+- unit
+- integration
+- e2e
+- smoke
+- manual-check-needed
+planned_vs_executed_rule:
+- commands_planned is filled before implementation
+- commands_run is filled only after actual execution
+- commands_run must not be copied from commands_planned unless the command was actually run
+failure_rule:
+- if stop_on_failure is true, the task cannot pass to docs_sync after a required red test
+- failed tests require blocked, reopened, revert, or forward-fix state
+
 ## Task Register
 
 | task_id | title | status | priority | owner_role | depends_on | required_approvals |
@@ -149,27 +236,35 @@ security_privacy_notes:
 - TBD
 non_functional_requirements:
 - TBD
+
+#### Verification Strategy
+
 tests_required: yes
 test_levels:
 - unit
 - integration
 test_targets:
 - TBD
-negative_tests:
-- TBD
-fixtures:
-- TBD
 test_data_origin:
 - synthetic
+fixtures:
+- TBD
 oracle:
+- TBD
+negative_tests:
 - TBD
 determinism_notes:
 - TBD
 flakiness_risk:
 - TBD
+stop_on_failure: true
+commands_planned:
+- TBD
 commands_run:
 - TBD
-stop_on_failure: true
+
+#### Evidence and Closure
+
 expected_artifacts:
 - updated code
 - test evidence

@@ -331,7 +331,47 @@ Forces explicit verification through:
 - `stop_on_failure`
 - `test_artifacts`
 
-## 10. Wiki sync
+## 10. Verification Strategy
+
+Tests must be planned before implementation starts.
+
+Planning responsibilities:
+
+- `planner` defines `tests_required`, `test_levels`, `test_targets`, `test_data_origin`, `oracle`, `negative_tests`, `flakiness_risk`, `stop_on_failure`, and `commands_planned`.
+- `reviewer` checks whether this strategy really proves the acceptance criteria.
+- `tester` executes the planned checks and fills `commands_run` and `test_artifacts`.
+- `implementer` must not silently weaken or replace planned tests after coding.
+
+Important distinction:
+
+- `commands_planned` means "we intend to run this".
+- `commands_run` means "this was actually run".
+
+A task should not become `done` if `tests_required: yes` and `commands_run` is empty.
+
+## 11. Execution Governance
+
+`Execution Governance` is the anti-fake-DONE layer.
+
+It should include:
+
+- `NO-FICTION`
+- `INVALID_INPUT`
+- prompt-first
+- code-first
+- strict DONE
+- hash verification
+- sync-audit
+- boundary-audit
+- rollback/reopened
+- timeout/escalation
+- separate implementation and docs-sync evidence
+
+The practical rule is simple:
+
+- the dashboard may visualize progress, but the plan must still prove that work was actually executed.
+
+## 12. Wiki sync
 
 The plan also needs to say:
 
@@ -342,7 +382,7 @@ The plan also needs to say:
 
 That is what the `wiki_*` fields are for.
 
-## 11. Related references
+## 13. Related references
 
 Task-plan references and templates:
 
@@ -359,7 +399,7 @@ Antigravity dashboard documentation:
 - [ANTIGRAVITY-TASK-PLAN-DASHBOARD.md](./ANTIGRAVITY-TASK-PLAN-DASHBOARD.md)
 - [Russian dashboard guide](../ru/ANTIGRAVITY-TASK-PLAN-DASHBOARD.md)
 
-## 12. Short version
+## 14. Short version
 
 If you want the shortest explanation:
 

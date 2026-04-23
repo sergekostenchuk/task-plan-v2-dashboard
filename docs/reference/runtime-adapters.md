@@ -35,6 +35,8 @@ Suggested mapping:
 - canonical task `status=ready|in_progress` -> included in Claude projection
 - `agent_sequence` -> turned into handoff notes or sub-bullets
 - `acceptance_checks` and `test_targets` -> turned into explicit checklist notes
+- `commands_planned` -> planned task checks
+- `commands_run` -> only actual execution evidence, never copied from planned commands
 
 Use [`../assets/CLAUDE-CODE.tasks-projection.md`](../assets/CLAUDE-CODE.tasks-projection.md) as the starting projection.
 
@@ -53,6 +55,8 @@ Suggested section mapping:
 - global `risks` and open questions -> `Current State` or `Problems`
 - task slices -> `Implementation Tasks`
 - `acceptance_checks` and `tests_required` -> `Verification Plan`
+- `test_levels`, `test_targets`, `test_data_origin`, `oracle`, and `commands_planned` -> `Verification Plan`
+- `commands_run` -> executed checks only after work is performed
 
 Use [`../assets/IMPLEMENTATION-PLAN.runtime.md`](../assets/IMPLEMENTATION-PLAN.runtime.md) as the starting projection.
 

@@ -43,7 +43,33 @@ These fields describe the whole feature or initiative.
 | `wiki_facts_to_capture` | Facts that must be written back | Decisions, caveats, exact paths |
 | `wiki_do_not_store` | Facts excluded from wiki | Secrets, personal data, ephemeral noise |
 
-## 3. Task-Level Fields
+## 3. Execution Governance Layer
+
+This layer defines what is forbidden during execution and what must be true before a task can progress.
+
+Keep it near `Execution Policy` in `TASK-PLAN.md`.
+
+| Field | Purpose | Notes |
+| --- | --- | --- |
+| `mode` | Execution stance | Recommended: `CODE-FIRST, NO-FICTION, ONE-TASK-ONLY` |
+| `no_fiction_policy` | Prevent invented facts | Missing critical input returns `INVALID_INPUT` |
+| `placeholder_policy` | Control `TBD` and placeholders | `TBD` allowed only while task is `draft` |
+| `prompt_policy` | Enforce one-task prompt discipline | Prompt must include `RESUME_FROM` and `verification_strategy` |
+| `code_first_policy` | Prevent docs-only closure for implementation work | Docs-only closure only for docs-governance tasks |
+| `done_policy` | Closure contract | Dependencies, approvals, tests, evidence, rollback, sync |
+| `commit_policy` | Commit/hash discipline | Verify hashes and keep implementation/docs evidence distinct |
+| `sync_audit_policy` | Register/block consistency | Task Register and Task Block must agree |
+| `boundary_audit_policy` | Scope and forbidden area enforcement | Scope violations block or reopen |
+| `rollback_policy` | Revert/forward-fix/reopen rules | Failed checks cannot jump directly to done |
+| `timeout_escalation_policy` | Timebox and stuck-loop handling | Escalate stale `in_progress` or exhausted review loops |
+
+Recommended hard rules:
+- `ready`, `in_progress`, `approved`, and `done` are forbidden if critical fields are `TBD`.
+- Placeholder evidence, placeholder tests, and placeholder artifact paths are forbidden.
+- `done` is invalid if required tests were not run or if required artifacts are missing.
+- `Task Register` and detailed task block must stay synchronized.
+
+## 4. Task-Level Fields
 
 These fields live inside each normalized task block.
 
@@ -75,7 +101,7 @@ These fields live inside each normalized task block.
 | `security_privacy_notes` | Local security or privacy notes | Especially for data-moving tasks |
 | `non_functional_requirements` | Task-level NFRs | Example: latency, offline safety |
 | `acceptance_criteria` | Human-readable success conditions | Must be testable |
-| `acceptance_checks` | Concrete checks or commands | How success is verified |
+| `acceptance_checks` | Concrete acceptance checks | Higher-level than raw test commands |
 | `exit_criteria` | Gate to leave the task | Stronger than "code written" |
 | `rollback_plan` | Backout path | Must be explicit for risky work |
 
@@ -89,7 +115,7 @@ Recommended task status enum:
 - `done`
 - `dropped`
 
-## 4. Agent-Level Fields
+## 5. Agent-Level Fields
 
 Use these fields per task. Default orchestration is sequential.
 
@@ -137,23 +163,38 @@ stop_conditions:
 - unresolved open question
 ```
 
-## 5. Execution And Reporting Fields
+## 6. Verification Strategy Fields
 
-These fields capture verification, evidence, and reporting.
+These fields are planned before implementation. The planner owns them first, the reviewer validates them, and the tester executes them.
 
 | Field | Purpose | Notes |
 | --- | --- | --- |
-| `tests_required` | Whether testing is mandatory | Prefer explicit yes/no + rationale |
-| `test_levels` | Required test levels | `unit`, `integration`, `e2e`, etc. |
-| `test_targets` | Exact targets to test | Modules, routes, contracts |
-| `negative_tests` | Failure-path tests | Required for risky or user-facing flows |
-| `fixtures` | Fixture files or generators | Keep exact names/paths |
-| `test_data_origin` | Source of test data | Synthetic, fixture, recorded, etc. |
-| `oracle` | How correctness is judged | Snapshot, invariant, contract, human diff |
-| `determinism_notes` | Determinism constraints | Seeds, time mocking, stable order |
-| `flakiness_risk` | Known flakiness vector | Note if likely to flap |
+| `tests_required` | Whether tests are mandatory | `yes`, `no`, or `manual-check-needed` with rationale |
+| `test_levels` | Test level list | `unit`, `integration`, `e2e`, `smoke`, `manual-check-needed` |
+| `test_targets` | Exact targets to test | Modules, APIs, UI flows, media outputs, contracts |
+| `test_data_origin` | Source of test data | Synthetic, fixture, recorded, user sample, generated |
+| `fixtures` | Fixture paths or generators | Must be stable and allowed to modify or read |
+| `oracle` | How success is judged | Snapshot, numeric threshold, status code, DOM assertion, waveform metric, invariant |
+| `negative_tests` | Failure-path tests | Required for risky user-visible flows |
+| `determinism_notes` | Determinism constraints | Seeds, clock mocking, stable order, network stubs |
+| `flakiness_risk` | Known instability vector | Async UI, sidecar startup, network APIs, model output variability |
+| `stop_on_failure` | Pipeline policy | If `true`, red required tests block handoff to docs_sync |
+| `commands_planned` | Commands planned before coding | Filled by planner/reviewer before implementer starts |
+| `commands_run` | Commands actually executed | Filled only after real execution |
+
+Hard rules:
+- Do not copy `commands_planned` into `commands_run` unless the command was actually executed.
+- `oracle` must be concrete. "Works" or "looks okay" is not an oracle.
+- If a critical verification field is unknown, keep the task `draft` or `blocked`.
+- If `tests_required: no`, explain why in `oracle` or `acceptance_checks`.
+
+## 7. Execution And Reporting Fields
+
+These fields capture executed evidence and reporting after work is performed.
+
+| Field | Purpose | Notes |
+| --- | --- | --- |
 | `commands_run` | Commands actually executed | Record facts, not intentions |
-| `stop_on_failure` | Failure policy | Usually `true` |
 | `expected_artifacts` | All expected outputs | Code, tests, reports, docs |
 | `code_artifacts` | Code outputs | Commits, files, PRs |
 | `test_artifacts` | Test outputs | Logs, reports, screenshots |
@@ -167,7 +208,7 @@ These fields capture verification, evidence, and reporting.
 | `wiki_facts_to_capture` | Facts to preserve | Exact facts only |
 | `wiki_do_not_store` | Facts excluded from wiki | Secrets and noise |
 
-## 6. Overlap Rules
+## 8. Overlap Rules
 
 Some fields can appear at both feature and task level.
 
@@ -177,7 +218,7 @@ Some fields can appear at both feature and task level.
 - `risks`: feature level is broad; task level is action-specific.
 - `wiki_*`: keep at feature level if shared, repeat at task level only when a task has special sync rules.
 
-## 7. Normalization Rules
+## 9. Normalization Rules
 
 - Prefer stable `key: value` lines under Markdown headings over loose prose.
 - Keep lists flat.
@@ -185,3 +226,4 @@ Some fields can appear at both feature and task level.
 - Use `TBD` or `open_question` when data is missing.
 - If a field is unknown and non-critical, keep the field and mark it unknown.
 - If a field is unknown and critical for safe execution, keep the task not-ready.
+- `Verification Strategy` headings are allowed, but fields should remain normal `key: value` lines for dashboard parsing.

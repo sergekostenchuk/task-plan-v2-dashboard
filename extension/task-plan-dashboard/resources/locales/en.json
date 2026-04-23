@@ -61,7 +61,9 @@
       "blocked": "Blocked",
       "blockedHint": "Tasks with active blockers",
       "featurePrep": "Feature Prep",
-      "featurePrepHintTemplate": "{checked}/{total} checklist items complete"
+      "featurePrepHintTemplate": "{checked}/{total} checklist items complete",
+      "governanceWarnings": "Governance Warnings",
+      "governanceWarningsHint": "Tasks with missing verification, sync, or closure requirements"
     },
     "kanban": {
       "approvals": "Approvals",
@@ -79,13 +81,24 @@
       "agentSequence": "Agent Sequence",
       "acceptanceChecks": "Acceptance Checks",
       "commandsRun": "Commands Run",
+      "commandsPlanned": "Commands Planned",
+      "verificationStrategy": "Verification Strategy",
+      "testLevels": "Test Levels",
+      "testTargets": "Test Targets",
+      "testDataOrigin": "Test Data Origin",
+      "oracle": "Oracle",
+      "negativeTests": "Negative Tests",
+      "flakinessRisk": "Flakiness Risk",
+      "stopOnFailure": "Stop On Failure",
+      "governanceIssues": "Governance Issues",
       "risks": "Risks",
       "artifacts": "Artifacts",
       "noGoalRecorded": "No goal recorded",
       "noRationaleRecorded": "No rationale recorded",
       "nextRole": "Next role",
       "none": "None",
-      "noArtifactLocations": "No artifact locations recorded"
+      "noArtifactLocations": "No artifact locations recorded",
+      "noGovernanceIssues": "No governance issues detected"
     },
     "executionState": {
       "noState": "No execution state recorded",

@@ -19,8 +19,16 @@ This file is a runtime projection derived from the canonical `TASK-PLAN.md`.
 
 - Pull from `tests_required`
 - Pull from `test_levels`
+- Pull from `test_targets`
+- Pull from `test_data_origin`
+- Pull from `oracle`
+- Pull from `negative_tests`
+- Pull from `flakiness_risk`
+- Pull from `stop_on_failure`
+- Pull from `commands_planned`
 - Pull from `acceptance_checks`
 - Pull from `rollback_plan`
+- Do not copy `commands_planned` into `commands_run` until the checks actually execute
 
 ## User Review Required
 

@@ -10,10 +10,6 @@ const DEFAULT_FEATURE_PREP_NAME = "FEATURE-PREPARATION.md";
 const DEFAULT_EXECUTION_STATE_NAME = "EXECUTION-STATE.md";
 const DEFAULT_EVENTS_PATH = path.join(".task-plan", "events.jsonl");
 const DEFAULT_DASHBOARD_SNAPSHOT_PATH = path.join(".task-plan", "dashboard-snapshot.json");
-const DEMO_WORKSPACES = {
-  ru: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO",
-  en: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO-EN"
-};
 const STATUS_ORDER = [
   "draft",
   "ready",
@@ -70,7 +66,17 @@ function formatTemplate(template, values = {}) {
 }
 
 function getDemoWorkspaceForLanguage(language) {
-  return DEMO_WORKSPACES[language] || DEMO_WORKSPACES.en;
+  const demoFolder = language === "ru" ? "demo-ru" : "demo-en";
+  return path.resolve(__dirname, "..", "..", "examples", demoFolder);
+}
+
+function getExistingDemoWorkspace(language) {
+  const preferred = getDemoWorkspaceForLanguage(language);
+  if (fs.existsSync(preferred)) {
+    return preferred;
+  }
+  const fallback = getDemoWorkspaceForLanguage("ru");
+  return fs.existsSync(fallback) ? fallback : null;
 }
 
 function localizeStatusLabel(strings, status) {
@@ -189,7 +195,12 @@ class TaskPlanService {
   }
 
   async openDemoWorkspace() {
-    const uri = vscode.Uri.file(getDemoWorkspaceForLanguage(this.language));
+    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
+    if (!existingDemoWorkspace) {
+      void vscode.window.showWarningMessage("Demo workspace was not found next to the extension source.");
+      return;
+    }
+    const uri = vscode.Uri.file(existingDemoWorkspace);
     await vscode.commands.executeCommand("vscode.openFolder", uri, { forceReuseWindow: false });
   }
 
@@ -322,14 +333,10 @@ class TaskPlanService {
       return discovered[0].fsPath;
     }
 
-    const demoPlanPath = path.join(getDemoWorkspaceForLanguage(this.language), DEFAULT_PLAN_NAME);
-    if (fs.existsSync(demoPlanPath)) {
+    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
+    const demoPlanPath = existingDemoWorkspace ? path.join(existingDemoWorkspace, DEFAULT_PLAN_NAME) : null;
+    if (demoPlanPath && fs.existsSync(demoPlanPath)) {
       return demoPlanPath;
-    }
-
-    const fallbackDemoPlanPath = path.join(DEMO_WORKSPACES.ru, DEFAULT_PLAN_NAME);
-    if (fs.existsSync(fallbackDemoPlanPath)) {
-      return fallbackDemoPlanPath;
     }
 
     return null;
@@ -372,6 +379,7 @@ class TaskPlanService {
     const testQueue = enriched.filter((task) => task.owner_role === "tester" || task.status === "approved").length;
     const doneCount = counts.done || 0;
     const total = enriched.length;
+    const governanceWarnings = enriched.reduce((sum, task) => sum + normalizeArray(task.governance_issues).length, 0);
     const timeline = buildTimeline(events, executionState);
 
     return {
@@ -394,6 +402,7 @@ class TaskPlanService {
       reviewQueue,
       testQueue,
       doneCount,
+      governanceWarnings,
       total,
       graph: buildGraph(enriched),
       ownerBreakdown: groupByOwner(enriched)
@@ -415,6 +424,7 @@ class TaskPlanService {
       reviewQueue: model.reviewQueue,
       testQueue: model.testQueue,
       doneCount: model.doneCount,
+      governanceWarnings: model.governanceWarnings,
       total: model.total,
       prep: model.prep,
       tasks: model.tasks,
@@ -842,6 +852,7 @@ class TaskPlanService {
         { label: ui.summary.reviewQueue, value: data.reviewQueue, hint: ui.summary.reviewQueueHint },
         { label: ui.summary.testQueue, value: data.testQueue, hint: ui.summary.testQueueHint },
         { label: ui.summary.blocked, value: data.counts.blocked || 0, hint: ui.summary.blockedHint },
+        { label: ui.summary.governanceWarnings, value: data.governanceWarnings || 0, hint: ui.summary.governanceWarningsHint },
         {
           label: ui.summary.featurePrep,
           value: data.prep.percent + "%",
@@ -971,7 +982,10 @@ class TaskPlanService {
         { title: ui.task.approvals, value: renderList(task.required_approvals) },
         { title: ui.task.agentSequence, value: renderList(task.agent_sequence) },
         { title: ui.task.acceptanceChecks, value: renderList(task.acceptance_checks) },
+        { title: ui.task.commandsPlanned, value: renderList(task.commands_planned) },
         { title: ui.task.commandsRun, value: renderList(task.commands_run) },
+        { title: ui.task.verificationStrategy, value: renderVerificationStrategy(task) },
+        { title: ui.task.governanceIssues, value: renderGovernanceIssues(task.governance_issues) },
         { title: ui.task.risks, value: renderList(task.risks) },
         { title: ui.task.artifacts, value: renderArtifacts(task.artifact_locations) }
       ];
@@ -1021,6 +1035,29 @@ class TaskPlanService {
         return '<div class="subtle">' + escapeHtml(ui.task.none) + '</div>';
       }
       return '<div class="list">' + items.map((item) => '<div class="list-item">' + escapeHtml(item) + '</div>').join("") + '</div>';
+    }
+
+    function renderVerificationStrategy(task) {
+      const rows = [
+        [ui.task.testLevels, task.test_levels],
+        [ui.task.testTargets, task.test_targets],
+        [ui.task.testDataOrigin, task.test_data_origin],
+        [ui.task.oracle, task.oracle],
+        [ui.task.negativeTests, task.negative_tests],
+        [ui.task.flakinessRisk, task.flakiness_risk],
+        [ui.task.stopOnFailure, task.stop_on_failure]
+      ];
+      return '<div class="list">' + rows.map(([label, value]) => {
+        const rendered = Array.isArray(value) ? value.join(", ") : (value || ui.task.none);
+        return '<div class="list-item"><strong>' + escapeHtml(label) + ':</strong> ' + escapeHtml(rendered) + '</div>';
+      }).join("") + '</div>';
+    }
+
+    function renderGovernanceIssues(items) {
+      if (!Array.isArray(items) || items.length === 0) {
+        return '<div class="subtle">' + escapeHtml(ui.task.noGovernanceIssues) + '</div>';
+      }
+      return '<div class="list">' + items.map((item) => '<div class="list-item" style="border-color:rgba(245,158,11,0.45);">' + escapeHtml(item) + '</div>').join("") + '</div>';
     }
 
     function renderArtifacts(items) {
@@ -1248,6 +1285,19 @@ function parseTaskPlan(markdown, planDir) {
     task.unblocks = normalizeArray(task.unblocks).filter(Boolean);
     task.artifact_locations = normalizeArray(task.artifact_locations).filter(Boolean);
     task.acceptance_checks = normalizeArray(task.acceptance_checks).filter(Boolean);
+    task.expected_artifacts = normalizeArray(task.expected_artifacts).filter(Boolean);
+    task.code_artifacts = normalizeArray(task.code_artifacts).filter(Boolean);
+    task.test_artifacts = normalizeArray(task.test_artifacts).filter(Boolean);
+    task.review_artifacts = normalizeArray(task.review_artifacts).filter(Boolean);
+    task.test_levels = normalizeArray(task.test_levels).filter(Boolean);
+    task.test_targets = normalizeArray(task.test_targets).filter(Boolean);
+    task.negative_tests = normalizeArray(task.negative_tests).filter(Boolean);
+    task.fixtures = normalizeArray(task.fixtures).filter(Boolean);
+    task.test_data_origin = normalizeArray(task.test_data_origin).filter(Boolean);
+    task.oracle = normalizeArray(task.oracle).filter(Boolean);
+    task.determinism_notes = normalizeArray(task.determinism_notes).filter(Boolean);
+    task.flakiness_risk = normalizeArray(task.flakiness_risk).filter(Boolean);
+    task.commands_planned = normalizeArray(task.commands_planned).filter(Boolean);
     task.commands_run = normalizeArray(task.commands_run).filter(Boolean);
     task.risks = normalizeArray(task.risks).filter(Boolean);
     task.agentContracts = agentContracts;
@@ -1764,10 +1814,83 @@ function enrichTasks(tasks, events, taskRegisterRows = [], executionState = null
       required_approvals: effectiveApprovals,
       register_row: registerRow || null,
       execution_state_overlay: isCurrentTask ? executionState : null,
+      governance_issues: computeGovernanceIssues(task, registerRow, {
+        status: effectiveStatus,
+        owner_role: effectiveOwnerRole,
+        dependencies: effectiveDependencies,
+        required_approvals: effectiveApprovals
+      }),
       latestEvent: lastEventByTask.get(task.task_id) || null,
       next_role: nextRole
     };
   });
+}
+
+function computeGovernanceIssues(originalTask, registerRow, effectiveTask) {
+  const issues = [];
+  const status = effectiveTask.status || originalTask.status || "draft";
+  const nonDraftStatuses = ["ready", "in_progress", "needs_review", "approved", "done"];
+  const criticalVerificationFields = [
+    ["tests_required", originalTask.tests_required],
+    ["test_levels", originalTask.test_levels],
+    ["test_targets", originalTask.test_targets],
+    ["test_data_origin", originalTask.test_data_origin],
+    ["oracle", originalTask.oracle],
+    ["stop_on_failure", originalTask.stop_on_failure],
+    ["commands_planned", originalTask.commands_planned]
+  ];
+
+  if (nonDraftStatuses.includes(status)) {
+    for (const [field, value] of criticalVerificationFields) {
+      if (isMissingOrPlaceholder(value)) {
+        issues.push(`${field} is missing or placeholder while task is ${status}`);
+      }
+    }
+    if (normalizeArray(originalTask.artifact_locations).some(isPlaceholderValue)) {
+      issues.push("artifact_locations contains placeholder values");
+    }
+  }
+
+  if (status === "done") {
+    const testsRequired = String(originalTask.tests_required || "").toLowerCase();
+    if ((testsRequired === "yes" || testsRequired === "manual-check-needed") && normalizeArray(originalTask.commands_run).length === 0) {
+      issues.push("done task requires commands_run evidence");
+    }
+    if (testsRequired === "yes" && normalizeArray(originalTask.test_artifacts).length === 0) {
+      issues.push("done task requires test_artifacts evidence");
+    }
+    if (normalizeArray(originalTask.review_artifacts).length === 0) {
+      issues.push("done task should record review_artifacts");
+    }
+  }
+
+  if (status === "blocked" && normalizeArray(originalTask.blocked_by).length === 0) {
+    issues.push("blocked task must specify blocked_by");
+  }
+
+  if (registerRow) {
+    if (originalTask.status && registerRow.status && originalTask.status !== registerRow.status) {
+      issues.push(`Task Register status (${registerRow.status}) differs from Task Block status (${originalTask.status})`);
+    }
+    if (originalTask.owner_role && registerRow.owner_role && originalTask.owner_role !== registerRow.owner_role) {
+      issues.push(`Task Register owner (${registerRow.owner_role}) differs from Task Block owner (${originalTask.owner_role})`);
+    }
+  }
+
+  return issues;
+}
+
+function isMissingOrPlaceholder(value) {
+  const values = normalizeArray(value);
+  if (values.length === 0) {
+    return true;
+  }
+  return values.some(isPlaceholderValue);
+}
+
+function isPlaceholderValue(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return !normalized || normalized === "tbd" || normalized === "unknown" || normalized === "open_question" || normalized === "-";
 }
 
 function buildGraph(tasks) {

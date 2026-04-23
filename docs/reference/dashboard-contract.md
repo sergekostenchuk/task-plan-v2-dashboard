@@ -21,7 +21,13 @@ Every task block should expose at least:
 - `blocked_by`
 - `required_approvals`
 - `tests_required`
+- `test_levels`
+- `test_targets`
+- `test_data_origin`
+- `oracle`
+- `commands_planned`
 - `acceptance_checks`
+- `commands_run`
 - `artifact_locations`
 - `timebox`
 
@@ -32,6 +38,7 @@ These minimum fields unlock:
 - owner or role view
 - test gate view
 - review gate view
+- verification/governance warning view
 
 ## Good Dashboard Views
 
@@ -74,8 +81,24 @@ Show:
 Show:
 - tasks with `tests_required: yes`
 - required test levels
+- planned commands
+- executed commands
+- test targets
+- oracle
+- flakiness risk
 - missing artifacts
 - stop-on-failure status
+
+### 6. Governance Warning View
+
+Show warnings for:
+- `ready`, `in_progress`, `approved`, or `done` tasks with critical `TBD` fields
+- `done` tasks with `tests_required: yes` but no `commands_run`
+- `done` tasks with `tests_required: yes` but no `test_artifacts`
+- tasks with `commands_planned` populated but `commands_run` empty after tester phase
+- `blocked` tasks without explicit `blocked_by`
+- Task Register and Task Block status mismatch
+- owner_role mismatch between Task Register, Task Block, and execution state
 
 ## Regeneration Rule
 
@@ -109,6 +132,8 @@ If you need richer visual output, add these optional fields:
 - `latest_review_artifact`
 - `latest_test_artifact`
 - `health`
+- `governance_issues`
+- `verification_state`
 
 ## Safe Fallback
 
