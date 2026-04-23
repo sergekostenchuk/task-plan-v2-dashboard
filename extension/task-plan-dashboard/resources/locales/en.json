@@ -35,6 +35,7 @@
       "kanban": "Kanban",
       "dependencyGraph": "Dependency Graph",
       "selectedTask": "Selected Task",
+      "currentExecutionState": "Current Execution State",
       "ownerBreakdown": "Owner Breakdown",
       "eventTimeline": "Event Timeline"
     },
@@ -42,6 +43,7 @@
       "kanban": "Statuses, current owners, approvals, dependencies, and next-role hints",
       "dependencyGraph": "Critical path and blockers from the canonical Markdown plan",
       "selectedTask": "Click a card or graph node to inspect details",
+      "currentExecutionState": "Live execution focus derived from EXECUTION-STATE.md",
       "ownerBreakdown": "Current active role per task",
       "eventTimeline": "Recent agent events from .task-plan/events.jsonl"
     },
@@ -85,8 +87,22 @@
       "none": "None",
       "noArtifactLocations": "No artifact locations recorded"
     },
+    "executionState": {
+      "noState": "No execution state recorded",
+      "currentTask": "Current Task",
+      "resumeFrom": "Resume From",
+      "nextStep": "Next Step",
+      "blockedBy": "Blocked By",
+      "executionMode": "Execution Mode",
+      "lastImplCommit": "Last Impl Commit",
+      "lastDocsCommit": "Last Docs Commit",
+      "completedSteps": "Completed Steps",
+      "updatedAt": "Updated At",
+      "none": "None"
+    },
     "timeline": {
-      "nextPrefix": "next"
+      "nextPrefix": "next",
+      "progressStepPrefix": "step"
     }
   }
 }

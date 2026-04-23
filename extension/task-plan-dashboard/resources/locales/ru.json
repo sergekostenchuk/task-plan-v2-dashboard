@@ -35,6 +35,7 @@
       "kanban": "Канбан",
       "dependencyGraph": "Граф зависимостей",
       "selectedTask": "Выбранная задача",
+      "currentExecutionState": "Текущее состояние исполнения",
       "ownerBreakdown": "Распределение владельцев",
       "eventTimeline": "Лента событий"
     },
@@ -42,6 +43,7 @@
       "kanban": "Статусы, текущие владельцы, approvals, зависимости и следующая роль",
       "dependencyGraph": "Критический путь и блокеры из канонического Markdown-плана",
       "selectedTask": "Нажмите на карточку или узел графа, чтобы посмотреть детали",
+      "currentExecutionState": "Live execution focus на основе EXECUTION-STATE.md",
       "ownerBreakdown": "Текущая активная роль по задачам",
       "eventTimeline": "Последние события агентов из .task-plan/events.jsonl"
     },
@@ -85,8 +87,22 @@
       "none": "Нет",
       "noArtifactLocations": "Ссылки на артефакты не записаны"
     },
+    "executionState": {
+      "noState": "Состояние исполнения не записано",
+      "currentTask": "Текущая задача",
+      "resumeFrom": "Точка продолжения",
+      "nextStep": "Следующий шаг",
+      "blockedBy": "Чем заблокировано",
+      "executionMode": "Режим исполнения",
+      "lastImplCommit": "Последний impl commit",
+      "lastDocsCommit": "Последний docs commit",
+      "completedSteps": "Выполненные шаги",
+      "updatedAt": "Обновлено",
+      "none": "Нет"
+    },
     "timeline": {
-      "nextPrefix": "дальше"
+      "nextPrefix": "дальше",
+      "progressStepPrefix": "шаг"
     }
   }
 }

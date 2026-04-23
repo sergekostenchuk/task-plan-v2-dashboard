@@ -7,7 +7,13 @@ const path = require("path");
 const EXTENSION_ID = "local.task-plan-dashboard";
 const DEFAULT_PLAN_NAME = "TASK-PLAN.md";
 const DEFAULT_FEATURE_PREP_NAME = "FEATURE-PREPARATION.md";
+const DEFAULT_EXECUTION_STATE_NAME = "EXECUTION-STATE.md";
 const DEFAULT_EVENTS_PATH = path.join(".task-plan", "events.jsonl");
+const DEFAULT_DASHBOARD_SNAPSHOT_PATH = path.join(".task-plan", "dashboard-snapshot.json");
+const DEMO_WORKSPACES = {
+  ru: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO",
+  en: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO-EN"
+};
 const STATUS_ORDER = [
   "draft",
   "ready",
@@ -64,17 +70,7 @@ function formatTemplate(template, values = {}) {
 }
 
 function getDemoWorkspaceForLanguage(language) {
-  const demoFolder = language === "ru" ? "demo-ru" : "demo-en";
-  return path.resolve(__dirname, "..", "..", "examples", demoFolder);
-}
-
-function getExistingDemoWorkspace(language) {
-  const preferred = getDemoWorkspaceForLanguage(language);
-  if (fs.existsSync(preferred)) {
-    return preferred;
-  }
-  const fallback = getDemoWorkspaceForLanguage("ru");
-  return fs.existsSync(fallback) ? fallback : null;
+  return DEMO_WORKSPACES[language] || DEMO_WORKSPACES.en;
 }
 
 function localizeStatusLabel(strings, status) {
@@ -125,6 +121,10 @@ class TaskPlanService {
     this.strings = loadDashboardStrings(this.context.extensionPath, this.language);
     this.planPath = await this.resolvePlanPath();
     this.model = await this.loadModel(this.planPath);
+    const wroteEvents = await this.syncAutoEvents(this.model);
+    if (wroteEvents) {
+      this.model = await this.loadModel(this.planPath);
+    }
     this.installWatchers(this.model);
     this.changeEmitter.fire();
     this.refreshPanel();
@@ -189,12 +189,7 @@ class TaskPlanService {
   }
 
   async openDemoWorkspace() {
-    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
-    if (!existingDemoWorkspace) {
-      void vscode.window.showWarningMessage("Demo workspace was not found next to the extension source.");
-      return;
-    }
-    const uri = vscode.Uri.file(existingDemoWorkspace);
+    const uri = vscode.Uri.file(getDemoWorkspaceForLanguage(this.language));
     await vscode.commands.executeCommand("vscode.openFolder", uri, { forceReuseWindow: false });
   }
 
@@ -261,6 +256,27 @@ class TaskPlanService {
     this.panel.webview.html = this.renderWebview(this.panel.webview, this.model, this.selectedTaskId);
   }
 
+  async syncAutoEvents(model) {
+    if (!model?.planDir || !model?.planPath) {
+      return false;
+    }
+
+    const snapshotPath = path.join(model.planDir, DEFAULT_DASHBOARD_SNAPSHOT_PATH);
+    const previousSnapshot = readJsonFile(snapshotPath);
+    const nextSnapshot = buildDashboardSnapshot(model);
+    const generatedEvents = deriveAutoEvents(previousSnapshot, nextSnapshot, model);
+
+    ensureParentDirectory(snapshotPath);
+    fs.writeFileSync(snapshotPath, JSON.stringify(nextSnapshot, null, 2));
+
+    if (generatedEvents.length === 0) {
+      return false;
+    }
+
+    appendEvents(model.eventsPath, generatedEvents);
+    return true;
+  }
+
   installWatchers(model) {
     for (const watcher of this.watchers) {
       watcher.dispose();
@@ -271,7 +287,9 @@ class TaskPlanService {
       return;
     }
 
-    const pathsToWatch = [model.planPath, model.featurePrepPath, model.eventsPath].filter(Boolean);
+    const pathsToWatch = [model.planPath, model.featurePrepPath, model.eventsPath, model.executionStatePath]
+      .filter(Boolean)
+      .filter((targetPath) => fs.existsSync(targetPath));
     for (const targetPath of pathsToWatch) {
       const watcher = fs.watch(targetPath, { persistent: false }, async () => {
         await this.refresh();
@@ -286,6 +304,14 @@ class TaskPlanService {
       return configPath;
     }
 
+    const workspaceFolders = vscode.workspace.workspaceFolders || [];
+    for (const folder of workspaceFolders) {
+      const directPlanPath = path.join(folder.uri.fsPath, DEFAULT_PLAN_NAME);
+      if (fs.existsSync(directPlanPath)) {
+        return directPlanPath;
+      }
+    }
+
     const persistedPath = this.context.globalState.get("taskPlanDashboard.selectedPlanPath");
     if (persistedPath && fs.existsSync(persistedPath)) {
       return persistedPath;
@@ -296,10 +322,14 @@ class TaskPlanService {
       return discovered[0].fsPath;
     }
 
-    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
-    const demoPlanPath = existingDemoWorkspace ? path.join(existingDemoWorkspace, DEFAULT_PLAN_NAME) : null;
-    if (demoPlanPath && fs.existsSync(demoPlanPath)) {
+    const demoPlanPath = path.join(getDemoWorkspaceForLanguage(this.language), DEFAULT_PLAN_NAME);
+    if (fs.existsSync(demoPlanPath)) {
       return demoPlanPath;
+    }
+
+    const fallbackDemoPlanPath = path.join(DEMO_WORKSPACES.ru, DEFAULT_PLAN_NAME);
+    if (fs.existsSync(fallbackDemoPlanPath)) {
+      return fallbackDemoPlanPath;
     }
 
     return null;
@@ -325,10 +355,13 @@ class TaskPlanService {
     const planDir = path.dirname(planPath);
     const parsedPlan = parseTaskPlan(markdown, planDir);
     const featurePrepPath = path.join(planDir, parsedPlan.featurePreparationPath || DEFAULT_FEATURE_PREP_NAME);
+    const executionStatePath = path.join(planDir, DEFAULT_EXECUTION_STATE_NAME);
+    const executionState = parseExecutionState(executionStatePath);
     const prep = parseFeaturePreparation(featurePrepPath);
     const eventsPath = path.join(planDir, DEFAULT_EVENTS_PATH);
+    const snapshotPath = path.join(planDir, DEFAULT_DASHBOARD_SNAPSHOT_PATH);
     const events = parseEvents(eventsPath);
-    const enriched = enrichTasks(parsedPlan.tasks, events);
+    const enriched = enrichTasks(parsedPlan.tasks, events, parsedPlan.taskRegisterRows, executionState);
 
     const counts = {};
     for (const status of STATUS_ORDER) {
@@ -339,7 +372,7 @@ class TaskPlanService {
     const testQueue = enriched.filter((task) => task.owner_role === "tester" || task.status === "approved").length;
     const doneCount = counts.done || 0;
     const total = enriched.length;
-    const timeline = events.slice().sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+    const timeline = buildTimeline(events, executionState);
 
     return {
       planPath,
@@ -347,6 +380,9 @@ class TaskPlanService {
       language: this.language,
       ui: this.strings.webview,
       featurePrepPath,
+      executionStatePath,
+      snapshotPath,
+      executionState,
       eventsPath,
       feature: parsedPlan.feature,
       executionPolicy: parsedPlan.executionPolicy,
@@ -374,6 +410,7 @@ class TaskPlanService {
       feature: model.feature,
       planPath: model.planPath,
       featurePrepPath: model.featurePrepPath,
+      executionState: model.executionState,
       counts: model.counts,
       reviewQueue: model.reviewQueue,
       testQueue: model.testQueue,
@@ -718,6 +755,15 @@ class TaskPlanService {
       <section class="panel">
         <div class="panel-inner">
           <div class="section-head">
+            <h2>${ui.sections.currentExecutionState}</h2>
+            <div class="subtle">${ui.hints.currentExecutionState}</div>
+          </div>
+          <div id="execution-state"></div>
+        </div>
+      </section>
+      <section class="panel">
+        <div class="panel-inner">
+          <div class="section-head">
             <h2>${ui.sections.ownerBreakdown}</h2>
             <div class="subtle">${ui.hints.ownerBreakdown}</div>
           </div>
@@ -945,6 +991,31 @@ class TaskPlanService {
         '</div>';
     }
 
+    function renderExecutionState() {
+      const state = data.executionState;
+      if (!state) {
+        document.getElementById("execution-state").innerHTML = '<div class="subtle">' + escapeHtml(ui.executionState.noState) + '</div>';
+        return;
+      }
+
+      const blocks = [
+        { title: ui.executionState.currentTask, value: escapeHtml(state.current_task || ui.executionState.none) },
+        { title: ui.executionState.resumeFrom, value: escapeHtml(state.resume_from || ui.executionState.none) },
+        { title: ui.executionState.nextStep, value: escapeHtml(state.next_step || ui.executionState.none) },
+        { title: ui.executionState.blockedBy, value: renderList(state.blocked_by) },
+        { title: ui.executionState.executionMode, value: escapeHtml(state.execution_mode || ui.executionState.none) },
+        { title: ui.executionState.lastImplCommit, value: escapeHtml(state.last_impl_commit || ui.executionState.none) },
+        { title: ui.executionState.lastDocsCommit, value: escapeHtml(state.last_docs_commit || ui.executionState.none) },
+        { title: ui.executionState.updatedAt, value: escapeHtml(state.updated_at || ui.executionState.none) },
+        { title: ui.executionState.completedSteps, value: renderList(state.completed_steps) }
+      ];
+
+      document.getElementById("execution-state").innerHTML =
+        '<div class="detail-grid">' +
+          blocks.map((block) => '<div class="detail-card"><h4>' + escapeHtml(block.title) + '</h4><div>' + block.value + '</div></div>').join("") +
+        '</div>';
+    }
+
     function renderList(items) {
       if (!Array.isArray(items) || items.length === 0) {
         return '<div class="subtle">' + escapeHtml(ui.task.none) + '</div>';
@@ -991,6 +1062,7 @@ class TaskPlanService {
     renderGraph();
     renderOwners();
     renderSelectedTask();
+    renderExecutionState();
     renderTimeline();
     attachGlobalEvents();
   </script>
@@ -1143,10 +1215,12 @@ function parseTaskPlan(markdown, planDir) {
   const featureSection = extractSection(headerBlock, "Feature Layer");
   const executionPolicySection = extractSection(headerBlock, "Execution Policy");
   const preImplementationSection = extractSection(headerBlock, "Pre-Implementation Gate");
+  const taskRegisterSection = extractSection(headerBlock, "Task Register");
 
   const feature = parseKeyValueSection(featureSection || "");
   const executionPolicy = parseKeyValueSection(executionPolicySection || "");
   const preImplementation = parseKeyValueSection(preImplementationSection || "");
+  const taskRegisterRows = parseTaskRegister(taskRegisterSection || "");
 
   const tasks = matches.map((match, index) => {
     const taskIdFromHeading = match[1].trim();
@@ -1186,6 +1260,7 @@ function parseTaskPlan(markdown, planDir) {
     feature,
     executionPolicy,
     preImplementation,
+    taskRegisterRows,
     featurePreparationPath: preImplementation.feature_preparation_path || DEFAULT_FEATURE_PREP_NAME,
     tasks
   };
@@ -1282,6 +1357,30 @@ function parseAgentContracts(section) {
   });
 }
 
+function parseTaskRegister(section) {
+  const rows = [];
+  for (const rawLine of section.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line.startsWith("| T-")) {
+      continue;
+    }
+    const parts = line.slice(1, -1).split("|").map((part) => part.trim());
+    if (parts.length < 7) {
+      continue;
+    }
+    rows.push({
+      task_id: parts[0],
+      title: parts[1],
+      status: parts[2],
+      priority: parts[3],
+      owner_role: parts[4],
+      dependencies: normalizeArray(parseInlineValue(parts[5])).filter(Boolean),
+      required_approvals: normalizeArray(parseInlineValue(parts[6])).filter(Boolean)
+    });
+  }
+  return rows;
+}
+
 function normalizeArray(value) {
   if (Array.isArray(value)) {
     return value.filter(Boolean);
@@ -1322,26 +1421,349 @@ function parseEvents(filePath) {
   return events;
 }
 
-function enrichTasks(tasks, events) {
+function ensureParentDirectory(filePath) {
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+}
+
+function appendEvents(eventsPath, events) {
+  ensureParentDirectory(eventsPath);
+  const lines = events.map((event) => JSON.stringify(event)).join("\n") + "\n";
+  fs.appendFileSync(eventsPath, lines, "utf8");
+}
+
+function readJsonFile(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return null;
+  }
+  try {
+    return JSON.parse(fs.readFileSync(filePath, "utf8"));
+  } catch (_error) {
+    return null;
+  }
+}
+
+function buildDashboardSnapshot(model) {
+  const tasks = {};
+  for (const task of model.tasks || []) {
+    tasks[task.task_id] = {
+      title: task.title,
+      status: task.status,
+      owner_role: task.owner_role,
+      next_role: task.next_role || null,
+      blocked_by: normalizeArray(task.blocked_by),
+      required_approvals: normalizeArray(task.required_approvals)
+    };
+  }
+  return {
+    planPath: model.planPath,
+    generated_at: new Date().toISOString(),
+    executionState: model.executionState
+      ? {
+          current_task: model.executionState.current_task || "",
+          next_step: model.executionState.next_step || "",
+          blocked_by: normalizeArray(model.executionState.blocked_by),
+          resume_from: model.executionState.resume_from || ""
+          ,
+          execution_mode: model.executionState.execution_mode || "",
+          last_impl_commit: model.executionState.last_impl_commit || "",
+          last_docs_commit: model.executionState.last_docs_commit || "",
+          completed_steps: normalizeArray(model.executionState.completed_steps),
+          updated_at: model.executionState.updated_at || ""
+        }
+      : null,
+    tasks
+  };
+}
+
+function deriveAutoEvents(previousSnapshot, nextSnapshot, model) {
+  const now = new Date().toISOString();
+  const generated = [];
+  const prevExec = previousSnapshot?.executionState || null;
+  const nextExec = nextSnapshot.executionState || null;
+
+  if (!previousSnapshot && nextExec?.current_task) {
+    generated.push({
+      ts: now,
+      task_id: nextExec.current_task,
+      role: "execution_state",
+      event: nextExec.blocked_by.length > 0 ? "blocked" : "active",
+      summary: nextExec.next_step || `Execution started from ${nextExec.resume_from || nextExec.current_task}.`,
+      path: DEFAULT_EXECUTION_STATE_NAME
+    });
+  } else if (prevExec || nextExec) {
+    const prevTask = prevExec?.current_task || "";
+    const nextTask = nextExec?.current_task || "";
+    if (prevTask !== nextTask && nextTask) {
+      generated.push({
+        ts: now,
+        task_id: nextTask,
+        role: "execution_state",
+        event: "focus_changed",
+        summary: nextExec?.next_step || `Current execution focus moved to ${nextTask}.`,
+        path: DEFAULT_EXECUTION_STATE_NAME
+      });
+    } else if (
+      nextTask &&
+      prevExec &&
+      nextExec &&
+      prevExec.next_step !== nextExec.next_step &&
+      nextExec.next_step
+    ) {
+      generated.push({
+        ts: now,
+        task_id: nextTask,
+        role: "execution_state",
+        event: "progress_note",
+        summary: nextExec.next_step,
+        path: DEFAULT_EXECUTION_STATE_NAME
+      });
+    }
+
+    const prevBlocked = JSON.stringify(normalizeArray(prevExec?.blocked_by));
+    const nextBlocked = JSON.stringify(normalizeArray(nextExec?.blocked_by));
+    if (prevBlocked !== nextBlocked && nextTask) {
+      generated.push({
+        ts: now,
+        task_id: nextTask,
+        role: "execution_state",
+        event: normalizeArray(nextExec?.blocked_by).length > 0 ? "blocked" : "unblocked",
+        summary: normalizeArray(nextExec?.blocked_by).length > 0
+          ? `Execution blocked by: ${normalizeArray(nextExec?.blocked_by).join(", ")}`
+          : "Execution blocker cleared.",
+        path: DEFAULT_EXECUTION_STATE_NAME
+      });
+    }
+
+    const prevCompletedSteps = normalizeArray(prevExec?.completed_steps);
+    const nextCompletedSteps = normalizeArray(nextExec?.completed_steps);
+    const newCompletedSteps = nextCompletedSteps.filter((step) => !prevCompletedSteps.includes(step));
+    for (const step of newCompletedSteps) {
+      const inferredTaskId = inferTaskIdFromCompletedStep(step) || nextTask || "SYSTEM";
+      generated.push({
+        ts: now,
+        task_id: inferredTaskId,
+        role: "execution_state",
+        event: "progress_step",
+        summary: step,
+        path: DEFAULT_EXECUTION_STATE_NAME
+      });
+    }
+  }
+
+  const previousTasks = previousSnapshot?.tasks || {};
+  const nextTasks = nextSnapshot.tasks || {};
+  const taskIds = new Set([...Object.keys(previousTasks), ...Object.keys(nextTasks)]);
+
+  for (const taskId of taskIds) {
+    const prevTask = previousTasks[taskId] || null;
+    const nextTask = nextTasks[taskId] || null;
+    if (!nextTask) {
+      continue;
+    }
+
+    if (!prevTask) {
+      if (nextTask.status && nextTask.status !== "draft") {
+        generated.push({
+          ts: now,
+          task_id: taskId,
+          role: nextTask.owner_role || "dashboard_sync",
+          event: statusToEvent(nextTask.status),
+          summary: `${taskId} entered the dashboard with status ${nextTask.status}.`,
+          path: DEFAULT_PLAN_NAME,
+          next_role: nextTask.next_role || undefined
+        });
+      }
+      continue;
+    }
+
+    if (prevTask.status !== nextTask.status) {
+      generated.push({
+        ts: now,
+        task_id: taskId,
+        role: nextTask.owner_role || "dashboard_sync",
+        event: statusToEvent(nextTask.status),
+        summary: `${taskId} status changed from ${prevTask.status} to ${nextTask.status}.`,
+        path: DEFAULT_PLAN_NAME,
+        next_role: nextTask.next_role || undefined
+      });
+    }
+
+    if (prevTask.owner_role !== nextTask.owner_role) {
+      generated.push({
+        ts: now,
+        task_id: taskId,
+        role: nextTask.owner_role || "dashboard_sync",
+        event: "owner_changed",
+        summary: `${taskId} owner changed from ${prevTask.owner_role || "unassigned"} to ${nextTask.owner_role || "unassigned"}.`,
+        path: DEFAULT_PLAN_NAME,
+        next_role: nextTask.next_role || undefined
+      });
+    }
+
+    if (prevTask.next_role !== nextTask.next_role && nextTask.next_role) {
+      generated.push({
+        ts: now,
+        task_id: taskId,
+        role: nextTask.owner_role || "dashboard_sync",
+        event: "next_role_changed",
+        summary: `${taskId} next role is now ${nextTask.next_role}.`,
+        path: DEFAULT_PLAN_NAME,
+        next_role: nextTask.next_role
+      });
+    }
+  }
+
+  return dedupeGeneratedEvents(generated);
+}
+
+function dedupeGeneratedEvents(events) {
+  const seen = new Set();
+  return events.filter((event) => {
+    const key = [event.task_id, event.role, event.event, event.summary, event.path || ""].join("|");
+    if (seen.has(key)) {
+      return false;
+    }
+    seen.add(key);
+    return true;
+  });
+}
+
+function statusToEvent(status) {
+  switch (status) {
+    case "ready":
+      return "ready";
+    case "in_progress":
+      return "started";
+    case "needs_review":
+      return "needs_review";
+    case "approved":
+      return "approved";
+    case "blocked":
+      return "blocked";
+    case "done":
+      return "completed";
+    case "dropped":
+      return "dropped";
+    case "draft":
+    default:
+      return "drafted";
+  }
+}
+
+function parseExecutionState(filePath) {
+  if (!filePath || !fs.existsSync(filePath)) {
+    return null;
+  }
+
+  const content = fs.readFileSync(filePath, "utf8");
+  const getBulletField = (name) => {
+    const match = content.match(new RegExp(`^- ${escapeRegex(name)}:\\s*(.+)$`, "m"));
+    return match ? match[1].trim() : "";
+  };
+  const unwrap = (value) => value.replace(/^`|`$/g, "").trim();
+  const completedStepsMatch = content.match(/^- completed_steps:\s*\n((?:\s+- .+\n?)*)/m);
+  const completed_steps = completedStepsMatch
+    ? completedStepsMatch[1]
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter((line) => line.startsWith("- "))
+        .map((line) => unwrap(line.replace(/^- /, "")))
+        .filter(Boolean)
+    : [];
+
+  return {
+    current_task: unwrap(getBulletField("current_task")),
+    current_prompt_path: unwrap(getBulletField("current_prompt_path")),
+    execution_mode: unwrap(getBulletField("execution_mode")),
+    next_step: unwrap(getBulletField("next_step")),
+    blocked_by: normalizeArray(parseInlineValue(unwrap(getBulletField("blocked_by")))).filter(Boolean),
+    updated_at: unwrap(getBulletField("updated_at")),
+    resume_from: unwrap((content.match(/RESUME_FROM:\s*`([^`]+)`/) || [])[1] || ""),
+    completed_steps,
+    last_impl_commit: unwrap(getBulletField("last_impl_commit")),
+    last_docs_commit: unwrap(getBulletField("last_docs_commit"))
+  };
+}
+
+function inferTaskIdFromCompletedStep(step) {
+  const match = String(step || "").match(/\bt(\d{3})\b/i);
+  return match ? `T-${match[1]}` : null;
+}
+
+function buildTimeline(events, executionState) {
+  const timeline = events.slice();
+  if (executionState?.current_task) {
+    const alreadyHasCurrentTaskEvent = timeline.some((event) => event.task_id === executionState.current_task);
+    if (!alreadyHasCurrentTaskEvent) {
+      timeline.push({
+        ts: executionState.updated_at || "live",
+        task_id: executionState.current_task,
+        role: "execution_state",
+        event: executionState.blocked_by.length > 0 ? "blocked" : "active",
+        summary: executionState.next_step || "Execution state points to this task as the current task."
+      });
+    }
+  }
+  return timeline.sort((a, b) => String(b.ts).localeCompare(String(a.ts)));
+}
+
+function enrichTasks(tasks, events, taskRegisterRows = [], executionState = null) {
+  const registerByTask = new Map(taskRegisterRows.map((row) => [row.task_id, row]));
   const lastEventByTask = new Map();
   for (const event of events) {
     lastEventByTask.set(event.task_id, event);
   }
 
   return tasks.map((task) => {
+    const registerRow = registerByTask.get(task.task_id);
+    let effectiveStatus = task.status;
+    let effectiveOwnerRole = task.owner_role;
+    let effectiveDependencies = task.dependencies;
+    let effectiveApprovals = task.required_approvals;
+
+    if (registerRow) {
+      if ((effectiveStatus === "draft" || !effectiveStatus) && registerRow.status) {
+        effectiveStatus = registerRow.status;
+      }
+      if ((effectiveOwnerRole === "planner" || !effectiveOwnerRole) && registerRow.owner_role) {
+        effectiveOwnerRole = registerRow.owner_role;
+      }
+      if ((!effectiveDependencies || effectiveDependencies.length === 0) && registerRow.dependencies.length > 0) {
+        effectiveDependencies = registerRow.dependencies;
+      }
+      if ((!effectiveApprovals || effectiveApprovals.length === 0) && registerRow.required_approvals.length > 0) {
+        effectiveApprovals = registerRow.required_approvals;
+      }
+    }
+
+    const isCurrentTask = executionState?.current_task === task.task_id;
+    if (isCurrentTask) {
+      if (executionState.blocked_by.length > 0) {
+        effectiveStatus = "blocked";
+      } else if (!["done", "dropped", "needs_review", "approved", "blocked"].includes(effectiveStatus)) {
+        effectiveStatus = "in_progress";
+      }
+    }
+
     const agentSequence = task.agent_sequence.length > 0 ? task.agent_sequence : ["planner", "implementer", "reviewer", "tester", "docs_sync"];
-    const ownerIndex = agentSequence.indexOf(task.owner_role);
+    const ownerIndex = agentSequence.indexOf(effectiveOwnerRole);
     let nextRole = ownerIndex >= 0 ? agentSequence[ownerIndex + 1] || null : agentSequence[0] || null;
-    if (task.status === "done" || task.status === "dropped") {
+    if (effectiveStatus === "done" || effectiveStatus === "dropped") {
       nextRole = null;
-    } else if (task.status === "needs_review") {
+    } else if (effectiveStatus === "needs_review") {
       nextRole = "reviewer";
-    } else if (task.status === "approved") {
+    } else if (effectiveStatus === "approved") {
       nextRole = "tester";
     }
 
     return {
       ...task,
+      status: effectiveStatus,
+      owner_role: effectiveOwnerRole,
+      dependencies: effectiveDependencies,
+      required_approvals: effectiveApprovals,
+      register_row: registerRow || null,
+      execution_state_overlay: isCurrentTask ? executionState : null,
       latestEvent: lastEventByTask.get(task.task_id) || null,
       next_role: nextRole
     };
