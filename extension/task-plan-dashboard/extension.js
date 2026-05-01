@@ -10,6 +10,10 @@ const DEFAULT_FEATURE_PREP_NAME = "FEATURE-PREPARATION.md";
 const DEFAULT_EXECUTION_STATE_NAME = "EXECUTION-STATE.md";
 const DEFAULT_EVENTS_PATH = path.join(".task-plan", "events.jsonl");
 const DEFAULT_DASHBOARD_SNAPSHOT_PATH = path.join(".task-plan", "dashboard-snapshot.json");
+const DEMO_WORKSPACES = {
+  ru: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO",
+  en: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO-EN"
+};
 const STATUS_ORDER = [
   "draft",
   "ready",
@@ -66,17 +70,7 @@ function formatTemplate(template, values = {}) {
 }
 
 function getDemoWorkspaceForLanguage(language) {
-  const demoFolder = language === "ru" ? "demo-ru" : "demo-en";
-  return path.resolve(__dirname, "..", "..", "examples", demoFolder);
-}
-
-function getExistingDemoWorkspace(language) {
-  const preferred = getDemoWorkspaceForLanguage(language);
-  if (fs.existsSync(preferred)) {
-    return preferred;
-  }
-  const fallback = getDemoWorkspaceForLanguage("ru");
-  return fs.existsSync(fallback) ? fallback : null;
+  return DEMO_WORKSPACES[language] || DEMO_WORKSPACES.en;
 }
 
 function localizeStatusLabel(strings, status) {
@@ -195,12 +189,7 @@ class TaskPlanService {
   }
 
   async openDemoWorkspace() {
-    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
-    if (!existingDemoWorkspace) {
-      void vscode.window.showWarningMessage("Demo workspace was not found next to the extension source.");
-      return;
-    }
-    const uri = vscode.Uri.file(existingDemoWorkspace);
+    const uri = vscode.Uri.file(getDemoWorkspaceForLanguage(this.language));
     await vscode.commands.executeCommand("vscode.openFolder", uri, { forceReuseWindow: false });
   }
 
@@ -333,10 +322,14 @@ class TaskPlanService {
       return discovered[0].fsPath;
     }
 
-    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
-    const demoPlanPath = existingDemoWorkspace ? path.join(existingDemoWorkspace, DEFAULT_PLAN_NAME) : null;
-    if (demoPlanPath && fs.existsSync(demoPlanPath)) {
+    const demoPlanPath = path.join(getDemoWorkspaceForLanguage(this.language), DEFAULT_PLAN_NAME);
+    if (fs.existsSync(demoPlanPath)) {
       return demoPlanPath;
+    }
+
+    const fallbackDemoPlanPath = path.join(DEMO_WORKSPACES.ru, DEFAULT_PLAN_NAME);
+    if (fs.existsSync(fallbackDemoPlanPath)) {
+      return fallbackDemoPlanPath;
     }
 
     return null;
@@ -368,7 +361,8 @@ class TaskPlanService {
     const eventsPath = path.join(planDir, DEFAULT_EVENTS_PATH);
     const snapshotPath = path.join(planDir, DEFAULT_DASHBOARD_SNAPSHOT_PATH);
     const events = parseEvents(eventsPath);
-    const enriched = enrichTasks(parsedPlan.tasks, events, parsedPlan.taskRegisterRows, executionState);
+    let enriched = enrichTasks(parsedPlan.tasks, events, parsedPlan.taskRegisterRows, executionState);
+    enriched = normalizeClosureStatuses(enriched);
 
     const counts = {};
     for (const status of STATUS_ORDER) {
@@ -1824,6 +1818,74 @@ function enrichTasks(tasks, events, taskRegisterRows = [], executionState = null
       next_role: nextRole
     };
   });
+}
+
+function normalizeClosureStatuses(tasks) {
+  const statusByTask = new Map(tasks.map((task) => [task.task_id, task.status]));
+  return tasks.map((task) => {
+    if (!shouldPromoteToDone(task, statusByTask)) {
+      return task;
+    }
+    return {
+      ...task,
+      status: "done",
+      owner_role: task.owner_role === "planner" ? "docs_sync" : task.owner_role,
+      next_role: null,
+      status_auto_resolved: true,
+      governance_issues: normalizeArray(task.governance_issues).filter(
+        (issue) =>
+          !issue.includes("blocked task must specify blocked_by") &&
+          !issue.includes("Task Register status") &&
+          !issue.includes("Task Register owner")
+      )
+    };
+  });
+}
+
+function shouldPromoteToDone(task, statusByTask) {
+  const status = String(task.status || "");
+  if (!["blocked", "approved"].includes(status)) {
+    return false;
+  }
+
+  const blockers = normalizeArray(task.blocked_by);
+  if (blockers.length > 0) {
+    return false;
+  }
+
+  const dependencies = normalizeArray(task.dependencies).filter((dep) => dep.startsWith("T-"));
+  if (dependencies.some((dep) => statusByTask.get(dep) !== "done")) {
+    return false;
+  }
+
+  const testsRequired = String(task.tests_required || "").toLowerCase();
+  const hasCommandsRun = normalizeArray(task.commands_run).length > 0;
+  const hasTestArtifacts = normalizeArray(task.test_artifacts).length > 0;
+  const hasReviewArtifacts = normalizeArray(task.review_artifacts).length > 0;
+  const hasCodeArtifacts = normalizeArray(task.code_artifacts).length > 0;
+  const hasAnyEvidence = hasCommandsRun || hasTestArtifacts || hasReviewArtifacts || hasCodeArtifacts;
+
+  if (!hasAnyEvidence) {
+    return false;
+  }
+
+  if (testsRequired === "yes" && (!hasCommandsRun || !hasTestArtifacts)) {
+    return false;
+  }
+
+  if (testsRequired === "manual-check-needed" && !hasCommandsRun) {
+    return false;
+  }
+
+  if (!hasReviewArtifacts) {
+    return false;
+  }
+
+  if (normalizeArray(task.acceptance_criteria).length === 0 || normalizeArray(task.acceptance_checks).length === 0) {
+    return false;
+  }
+
+  return true;
 }
 
 function computeGovernanceIssues(originalTask, registerRow, effectiveTask) {
