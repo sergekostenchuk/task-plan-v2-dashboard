@@ -10,10 +10,6 @@ const DEFAULT_FEATURE_PREP_NAME = "FEATURE-PREPARATION.md";
 const DEFAULT_EXECUTION_STATE_NAME = "EXECUTION-STATE.md";
 const DEFAULT_EVENTS_PATH = path.join(".task-plan", "events.jsonl");
 const DEFAULT_DASHBOARD_SNAPSHOT_PATH = path.join(".task-plan", "dashboard-snapshot.json");
-const DEMO_WORKSPACES = {
-  ru: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO",
-  en: "/Users/kostenchuksergey/TASK-PLAN-DASHBOARD-DEMO-EN"
-};
 const STATUS_ORDER = [
   "draft",
   "ready",
@@ -70,7 +66,17 @@ function formatTemplate(template, values = {}) {
 }
 
 function getDemoWorkspaceForLanguage(language) {
-  return DEMO_WORKSPACES[language] || DEMO_WORKSPACES.en;
+  const demoFolder = language === "ru" ? "demo-ru" : "demo-en";
+  return path.resolve(__dirname, "..", "..", "examples", demoFolder);
+}
+
+function getExistingDemoWorkspace(language) {
+  const preferred = getDemoWorkspaceForLanguage(language);
+  if (fs.existsSync(preferred)) {
+    return preferred;
+  }
+  const fallback = getDemoWorkspaceForLanguage("ru");
+  return fs.existsSync(fallback) ? fallback : null;
 }
 
 function localizeStatusLabel(strings, status) {
@@ -189,7 +195,12 @@ class TaskPlanService {
   }
 
   async openDemoWorkspace() {
-    const uri = vscode.Uri.file(getDemoWorkspaceForLanguage(this.language));
+    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
+    if (!existingDemoWorkspace) {
+      void vscode.window.showWarningMessage("Demo workspace was not found next to the extension source.");
+      return;
+    }
+    const uri = vscode.Uri.file(existingDemoWorkspace);
     await vscode.commands.executeCommand("vscode.openFolder", uri, { forceReuseWindow: false });
   }
 
@@ -322,14 +333,10 @@ class TaskPlanService {
       return discovered[0].fsPath;
     }
 
-    const demoPlanPath = path.join(getDemoWorkspaceForLanguage(this.language), DEFAULT_PLAN_NAME);
-    if (fs.existsSync(demoPlanPath)) {
+    const existingDemoWorkspace = getExistingDemoWorkspace(this.language);
+    const demoPlanPath = existingDemoWorkspace ? path.join(existingDemoWorkspace, DEFAULT_PLAN_NAME) : null;
+    if (demoPlanPath && fs.existsSync(demoPlanPath)) {
       return demoPlanPath;
-    }
-
-    const fallbackDemoPlanPath = path.join(DEMO_WORKSPACES.ru, DEFAULT_PLAN_NAME);
-    if (fs.existsSync(fallbackDemoPlanPath)) {
-      return fallbackDemoPlanPath;
     }
 
     return null;
