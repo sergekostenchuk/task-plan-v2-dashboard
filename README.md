@@ -1,6 +1,21 @@
-# TASK-PLAN v2 GitHub Package
+# TASK-PLAN v2 Dashboard
 
-This folder is a GitHub-ready bundle for publishing the `TASK-PLAN v2` planning system, the Antigravity dashboard extension, bilingual docs, demo workspaces, and media.
+TASK-PLAN v2 Dashboard is a public package for making agentic software work reviewable. It combines a Markdown control-document format, an Antigravity/VS Code-style dashboard extension, bilingual docs, templates, demo workspaces, and media that show how multi-agent plans can be tracked from feature gate to verification.
+
+## Why this matters
+
+Agentic coding sessions often fail because plans, blockers, test evidence, and review state are scattered across chat history and local files. TASK-PLAN v2 gives maintainers a canonical `TASK-PLAN.md` contract with explicit status, dependencies, verification commands, approvals, rollback notes, and progress events. The dashboard makes that contract visible enough for a human reviewer to decide whether work is ready, blocked, or still needs evidence.
+
+This is relevant to Codex-style OSS maintenance because it turns agent work into auditable maintainer workflow: issues can map to tasks, tasks can map to checks, and release decisions can be backed by recorded verification rather than chat memory.
+
+## Quick start
+
+1. Read the English guide: [`docs/en/TASKS-GENERAL-INSTRUCTIONS.md`](./docs/en/TASKS-GENERAL-INSTRUCTIONS.md).
+2. Copy [`templates/TASK-PLAN-v2.template.md`](./templates/TASK-PLAN-v2.template.md) into a project as `TASK-PLAN.md`.
+3. Open one of the demo workspaces in [`examples/`](./examples/) to see a filled plan.
+4. Inspect the dashboard extension source in [`extension/task-plan-dashboard/`](./extension/task-plan-dashboard/).
+
+Status: public OSS package, documentation-first, with extension packaging and CI planned as next steps.
 
 ## What is included
 
@@ -74,14 +89,12 @@ The following machine-specific files are intentionally not part of this package:
 - local cache files
 - user profile state
 
-## Publish checklist
+## Roadmap
 
-Before pushing to GitHub:
-
-1. Review the extension id, publisher, and packaging strategy.
-2. Decide whether demo media should remain in the main branch or move to Releases.
-3. Add a repository license if needed.
-4. Add CI or VSIX packaging later if you want installable release artifacts.
+- Package the dashboard extension as a reproducible VSIX build.
+- Add CI for template validation and extension smoke checks.
+- Move large demo media to GitHub Releases if repository size becomes a problem.
+- Add more examples for Codex, Claude Code, and Antigravity workflows.
 
 ## Main entry points
 
@@ -92,3 +105,7 @@ Start here:
 - [English dashboard guide](./docs/en/ANTIGRAVITY-TASK-PLAN-DASHBOARD.md)
 - [Russian dashboard guide](./docs/ru/ANTIGRAVITY-TASK-PLAN-DASHBOARD.md)
 - [Extension source](./extension/task-plan-dashboard/README.md)
+
+## License
+
+MIT, see [`LICENSE`](./LICENSE).
