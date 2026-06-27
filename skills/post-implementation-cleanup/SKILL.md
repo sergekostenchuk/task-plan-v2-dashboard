@@ -137,12 +137,21 @@ If cleanup is incomplete, the task is not ready for final `done`.
 
 After cleanup edits:
 
-1. rerun the relevant checks for the task;
+1. rerun the checks already defined for the task in `commands_planned`, `test_levels`, `test_targets`, and related verification notes;
 2. confirm the cleanup pass did not break behavior;
 3. record only actually executed checks in `commands_run`;
 4. attach cleanup evidence to the task artifacts.
 
 Do not copy `commands_planned` into `commands_run` unless the command was actually executed.
+
+If the task already names a project runner, use it. Examples include:
+
+- `pnpm test`
+- `npm test`
+- `pytest`
+- `go test ./...`
+
+If the task uses narrower checks instead of a full test suite, rerun those exact scoped checks and record them verbatim.
 
 ## Output
 

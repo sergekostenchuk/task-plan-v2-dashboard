@@ -37,6 +37,8 @@ Status: public OSS package, documentation-first, with extension packaging and CI
 - `skills/post-implementation-cleanup/`
 - `skills/legacy-audit/`
 
+The skills layer is authored in English to keep execution semantics stable across Codex, Claude Code, Gemini, and Antigravity, while the surrounding human-facing documentation remains bilingual in `docs/en/` and `docs/ru/`.
+
 ### Extension source
 
 - `extension/task-plan-dashboard/`
