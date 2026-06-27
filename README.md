@@ -32,6 +32,11 @@ Status: public OSS package, documentation-first, with extension packaging and CI
 - `templates/CLAUDE-CODE.tasks-projection.md`
 - `templates/IMPLEMENTATION-PLAN.runtime.md`
 
+### Skills
+
+- `skills/post-implementation-cleanup/`
+- `skills/legacy-audit/`
+
 ### Extension source
 
 - `extension/task-plan-dashboard/`
@@ -70,6 +75,7 @@ docs/
   ru/
   reference/
 templates/
+skills/
 extension/
   task-plan-dashboard/
 examples/

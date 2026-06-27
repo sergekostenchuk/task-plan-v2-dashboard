@@ -298,6 +298,25 @@ summary_format:
 - blockers
 - next owner
 
+#### Post-Implementation Cleanup
+
+> Load and execute: `skills/post-implementation-cleanup/SKILL.md`
+
+cleanup_required: yes
+cleanup_scope:
+- files touched by this task only
+cleanup_report:
+- TBD
+cleanup_warnings:
+- TBD
+
+- [ ] Dead functions/classes removed or explicitly flagged as warnings
+- [ ] Unused imports cleaned
+- [ ] Commented-out legacy code removed
+- [ ] Old configs/flags from replaced implementation deleted
+- [ ] Relevant verification rerun after cleanup
+- [ ] Cleanup report documented in task artifacts
+
 #### Agent Contracts
 
 ##### A1

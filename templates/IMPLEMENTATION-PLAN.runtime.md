@@ -30,6 +30,12 @@ This file is a runtime projection derived from the canonical `TASK-PLAN.md`.
 - Pull from `rollback_plan`
 - Do not copy `commands_planned` into `commands_run` until the checks actually execute
 
+## Post-Implementation Cleanup
+
+- Pull cleanup obligations from the canonical `TASK-PLAN.md`
+- Run cleanup before final task closure
+- Record cleanup verification in `commands_run` only after the checks actually execute
+
 ## User Review Required
 
 - List any task or feature change that materially affects UX, data handling, security, or rollout
