@@ -26,9 +26,9 @@
 
 Оно является **наблюдаемым UI-слоем** над уже существующей моделью `TASK-PLAN v2`.
 
-## 2. Где оно установлено
+## 2. Где лежит source
 
-Текущая локальная установка лежит здесь:
+Текущий репозиторный source лежит здесь:
 
 - [package.json](../../extension/task-plan-dashboard/package.json)
 - [extension.js](../../extension/task-plan-dashboard/extension.js)
@@ -42,8 +42,8 @@ Runtime-specific user profile files вроде `extensions.json` и `.obsolete` 
 Текущие значения:
 
 - extension id: `local.task-plan-dashboard`
-- folder: `local.task-plan-dashboard-1.0.0`
-- display name: `Task Plan Dashboard`
+- installed folder / display version: `local.task-plan-dashboard-2.0.2`
+- package version: `2.0.2`
 - publisher: `local`
 
 Это полезно для:
@@ -75,12 +75,16 @@ Dashboard показывает:
 - hero block по текущей фиче;
 - summary cards;
 - progress по `FEATURE-PREPARATION.md`;
+- Agent Arena с анимированными ролями;
 - kanban по статусам;
-- dependency graph;
+- улучшенный kanban, включая newest-first порядок в колонке `done`;
+- интерактивный dependency graph с zoom, pan, fullscreen и drag;
 - selected task details;
 - owner breakdown;
 - event timeline;
-- ссылки на artifacts.
+- ссылки на artifacts;
+- floating audio drawer;
+- stage message overlay над robot area с кнопкой закрытия.
 
 ## 5. Какие файлы расширение считает каноническими
 
@@ -260,7 +264,7 @@ Dashboard показывает:
 
 Именно ради видимости этой цепочки расширение и создавалось.
 
-## 11. Что сейчас умеет v1
+## 11. Что сейчас умеет 2.0.2
 
 Текущая версия умеет:
 
@@ -270,18 +274,22 @@ Dashboard показывает:
 - показывать activity bar tree;
 - открывать dashboard panel;
 - рендерить kanban;
-- рендерить dependency graph;
+- сортировать `done` column newest-first;
+- показывать Agent Arena с анимированными role cards;
+- рендерить dependency graph с zoom, pan, fullscreen и drag controls;
 - показывать selected task;
 - показывать artifacts;
 - показывать owner breakdown;
 - показывать event timeline.
+- переключать dashboard UI между `en`, `ru`, `es`, `fr`, `de`, `zh`, `ja`;
+- показывать floating audio drawer с bundled BGM wiring;
+- показывать stage message overlay над robot area.
 
-## 12. Что v1 пока не умеет
+## 12. Что 2.0.2 пока не умеет
 
 Текущая версия пока не делает:
 
 - редактирование `TASK-PLAN.md` из UI;
-- drag-and-drop kanban;
 - изменение статусов из dashboard;
 - автоматическое построение состояния из chat transcripts;
 - multi-repo aggregation;
@@ -327,7 +335,7 @@ Dashboard показывает:
 Проверить, что существует:
 
 - папка исходников в репо: `extension/task-plan-dashboard`
-- локальный install target: `<USER_HOME>/.antigravity/extensions/local.task-plan-dashboard-1.0.0`
+- локальный install target: `<USER_HOME>/.antigravity/extensions/local.task-plan-dashboard-2.0.2`
 
 ### Проверка 2. Есть ли регистрация в `extensions.json`
 
@@ -349,7 +357,7 @@ Dashboard показывает:
 
 Если там есть:
 
-- `local.task-plan-dashboard-1.0.0: true`
+- `local.task-plan-dashboard-2.0.2: true`
 
 то extension будет считаться удаленным и не загрузится.
 
@@ -388,15 +396,18 @@ Antigravity кэширует user-extension scan.
 4. Выполнить `Task Plan: Open Dashboard`
 5. Убедиться, что видны:
    - summary cards
+   - Agent Arena
    - kanban
    - dependency graph
+   - graph zoom, pan, fullscreen и drag controls
    - selected task
    - owner breakdown
    - event timeline
+   - floating audio drawer
 6. Нажать на task card и проверить, что selected panel меняется
 7. Нажать на artifact path и проверить, что файл открывается
 
-Если все это работает, значит v1 установлен корректно.
+Если все это работает, значит 2.0.2 установлен корректно.
 
 ## 16. Как использовать расширение в реальном проекте
 

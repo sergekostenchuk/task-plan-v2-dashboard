@@ -1,0 +1,3722 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TASK-PLAN v2: Unified Deluxe Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap');
+
+    :root {
+      --bg: #03060f;
+      --panel: rgba(10, 16, 33, 0.7);
+      --panel-border: rgba(96, 165, 250, 0.1);
+      --panel-border-active: rgba(96, 165, 250, 0.35);
+      --text: #f3f4f6;
+      --muted: #64748b;
+
+      /* Neon Accent Colors */
+      --c-planner: #00d2ff;     /* Cyan */
+      --c-worker: #ff9d00;      /* Amber */
+      --c-reviewer: #bd00ff;    /* Violet */
+      --c-tester: #00ff87;      /* Emerald */
+      --c-docs: #ff007b;        /* Laser Pink */
+      --c-alert: #ff3c3c;       /* Alert Red */
+      --c-inactive: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #0c152b 0%, var(--bg) 95%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><rect width="60" height="60" fill="none" stroke="rgba(255,255,255,0.01)" stroke-width="1"/></svg>');
+      color: var(--text);
+      font-family: 'Outfit', sans-serif;
+      min-height: 100vh;
+      padding: 20px;
+    }
+
+    /* Outer Adaptive Grid Wrapper */
+    .dashboard-grid {
+      max-width: 1650px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 28px;
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+      position: relative;
+    }
+
+    .brand h1 {
+      font-size: 24px;
+      font-weight: 800;
+      background: linear-gradient(90deg, #38bdf8, #a855f7, #ec4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: 0.5px;
+    }
+
+    .brand p {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .brand p::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--c-tester);
+      box-shadow: 0 0 8px var(--c-tester);
+      animation: pulseIndicator 1s infinite alternate;
+    }
+
+    /* Control buttons */
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .audio-toggle {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .audio-toggle.active {
+      background: rgba(0, 210, 255, 0.1);
+      border-color: var(--c-planner);
+      color: var(--c-planner);
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+    }
+
+    .btn {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--panel-border);
+      color: var(--text);
+      padding: 10px 18px;
+      border-radius: 12px;
+      font-family: 'Outfit', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.07);
+      border-color: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0099ff, #bd00ff);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 4px 15px rgba(189, 0, 255, 0.35);
+    }
+
+    .btn-danger {
+      background: rgba(255, 60, 60, 0.1);
+      border-color: rgba(255, 60, 60, 0.2);
+      color: #ffa4a4;
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 60, 60, 0.2);
+      border-color: var(--c-alert);
+    }
+
+    /* Column Panels */
+    .left-col, .right-col {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--panel-border);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 1px 0px rgba(255, 255, 255, 0.04);
+      position: relative;
+    }
+
+    .panel-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      letter-spacing: 0.5px;
+    }
+
+    .panel-title span {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 400;
+      background: rgba(255,255,255,0.02);
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+
+    /* Settings & Audio Config panel */
+    .settings-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: center;
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+      grid-column: 1 / -1;
+    }
+    .settings-bar select, .settings-bar button {
+      background: rgba(30, 41, 59, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .settings-bar select:hover, .settings-bar button:hover {
+      border-color: var(--c-planner);
+    }
+    .settings-bar label {
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .settings-bar .setting-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    #bgm-status {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* Floating Audio Controller Panel */
+    .audio-drawer-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--c-planner), var(--c-worker));
+      border: none;
+      box-shadow: 0 8px 32px rgba(0, 210, 255, 0.3);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      z-index: 1000;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .audio-drawer-toggle:hover {
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 12px 40px rgba(0, 210, 255, 0.5);
+    }
+    .audio-drawer-toggle:focus {
+      outline: none;
+    }
+    .audio-drawer-toggle.active {
+      transform: scale(0.9) rotate(-90deg);
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: none;
+    }
+    .audio-drawer {
+      position: fixed;
+      bottom: 84px;
+      right: -360px; /* Hidden by default */
+      width: 320px;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      transform: translateY(20px);
+      pointer-events: none;
+    }
+    .audio-drawer.open {
+      right: 24px;
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .audio-drawer h3 {
+      font-size: 14px;
+      margin-top: 0;
+      margin-bottom: 16px;
+      color: var(--c-planner);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .audio-drawer h3 button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0;
+    }
+    .audio-drawer h3 button:hover {
+      color: #fff;
+    }
+    .audio-control-row {
+      margin-bottom: 16px;
+    }
+    .audio-control-row label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .audio-control-row label span.val {
+      color: #fff;
+      font-family: monospace;
+    }
+    .audio-control-row input[type="range"] {
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.1);
+      outline: none;
+      -webkit-appearance: none;
+      accent-color: var(--c-planner);
+    }
+    .audio-control-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--c-planner);
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+    .audio-control-row input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.3);
+    }
+    .bgm-track-info {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 10px;
+      margin-bottom: 16px;
+      font-size: 11px;
+      border: 1px solid rgba(255, 255, 255, 0.03);
+    }
+    .bgm-track-title {
+      font-weight: 600;
+      color: #f8fafc;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
+    }
+    .bgm-track-meta {
+      color: var(--muted);
+      display: flex;
+      justify-content: space-between;
+    }
+    .audio-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    .audio-buttons .btn {
+      flex: 1;
+      padding: 8px;
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    /* Fullscreen graph panel overlay styling */
+    .graph-panel.fullscreen-active {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 9999;
+      background: rgba(10, 15, 30, 0.95);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+      margin: 0;
+      border: none;
+      border-radius: 0;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+    }
+    .graph-panel.fullscreen-active .graph-canvas-wrap {
+      flex-grow: 1;
+      height: calc(100vh - 80px) !important;
+    }
+    /* Cursor hints for panning the background */
+    #graph-svg {
+      cursor: grab;
+    }
+    #graph-svg:active {
+      cursor: grabbing;
+    }
+    /* Reset pointer events for nodes */
+    .graph-node {
+      cursor: pointer !important;
+    }
+    .graph-panel .btn-sm {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: var(--muted);
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+    }
+    .graph-panel .btn-sm:hover {
+      background: var(--c-planner);
+      color: #fff;
+      border-color: var(--c-planner);
+    }
+
+    /* Summary Metrics Grid (Responsive Columns) */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 12px;
+      grid-column: 1 / -1;
+    }
+
+    .summary-card {
+      background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.003));
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 100px;
+    }
+
+    .summary-card .label {
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    .summary-card .value {
+      font-size: 24px;
+      font-weight: 700;
+      margin-top: 8px;
+      background: linear-gradient(135deg, #fff 0%, #cbd5e1 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .summary-card .subtle-hint {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    /* Feature Prep Progress Bar */
+    .prep-progress-bar {
+      height: 6px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      margin-top: 8px;
+      overflow: hidden;
+    }
+
+    .prep-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--c-planner), var(--c-tester));
+      border-radius: 10px;
+      width: 0%;
+      transition: width 0.5s ease;
+    }
+
+    /* Agent Stage (podiums) */
+    .agent-stage-inner {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      position: relative;
+      padding: 20px 0;
+    }
+
+    .agent-laser-track {
+      position: absolute;
+      top: 75px;
+      left: 10%;
+      width: 80%;
+      height: 4px;
+      background: rgba(255,255,255,0.02);
+      border-radius: 10px;
+      z-index: 1;
+    }
+
+    .agent-laser-beam {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--c-planner), var(--c-worker), var(--c-reviewer), var(--c-tester), var(--c-docs));
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.7);
+      border-radius: 10px;
+      transition: width 0.6s ease;
+    }
+
+    .agent-podium {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      z-index: 2;
+      position: relative;
+    }
+
+    .avatar-wrap {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, #0d1222 0%, #05070e 100%);
+      border: 2px solid rgba(255, 255, 255, 0.05);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .avatar-wrap::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 2px dashed transparent;
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+
+    .agent-podium.active .avatar-wrap {
+      transform: scale(1.15) translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .agent-podium.active .avatar-wrap::before {
+      opacity: 1;
+      animation: spinBorder 15s linear infinite;
+    }
+
+    .agent-podium[data-role="planner"].active .avatar-wrap { border-color: var(--c-planner); }
+    .agent-podium[data-role="planner"].active .avatar-wrap::before { border-color: var(--c-planner); }
+    .agent-podium[data-role="worker"].active .avatar-wrap { border-color: var(--c-worker); }
+    .agent-podium[data-role="worker"].active .avatar-wrap::before { border-color: var(--c-worker); }
+    .agent-podium[data-role="reviewer"].active .avatar-wrap { border-color: var(--c-reviewer); }
+    .agent-podium[data-role="reviewer"].active .avatar-wrap::before { border-color: var(--c-reviewer); }
+    .agent-podium[data-role="tester"].active .avatar-wrap { border-color: var(--c-tester); }
+    .agent-podium[data-role="tester"].active .avatar-wrap::before { border-color: var(--c-tester); }
+    .agent-podium[data-role="docs"].active .avatar-wrap { border-color: var(--c-docs); }
+    .agent-podium[data-role="docs"].active .avatar-wrap::before { border-color: var(--c-docs); }
+
+    .bot-svg {
+      width: 64px;
+      height: 64px;
+      transform-origin: bottom center;
+    }
+
+    .agent-podium.active .bot-svg {
+      animation: breatheBot 1.8s ease-in-out infinite alternate;
+    }
+
+    /* Robot-specific inner animations */
+    .gear-cw { transform-origin: 32px 28px; }
+    .gear-ccw { transform-origin: 32px 28px; }
+    .agent-podium[data-role="planner"].active .gear-cw { animation: spinCW 8s linear infinite; }
+    .agent-podium[data-role="planner"].active .gear-ccw { animation: spinCCW 6s linear infinite; }
+
+    .worker-hand-l { transform-origin: 22px 52px; }
+    .worker-hand-r { transform-origin: 42px 52px; }
+    .agent-podium[data-role="worker"].active .worker-hand-l { animation: handTypeL 0.15s infinite alternate; }
+    .agent-podium[data-role="worker"].active .worker-hand-r { animation: handTypeR 0.12s infinite alternate; }
+
+    .reviewer-laser { display: none; }
+    .agent-podium[data-role="reviewer"].active .reviewer-laser { display: block; animation: scanBeam 1s alternate infinite; }
+
+    .b-flask-1 { transform-origin: 15px 50px; }
+    .agent-podium[data-role="tester"].active .b-flask-1 { animation: bubbleRising 1.2s infinite linear; }
+
+    .docs-page-r { transform-origin: 32px 30px; }
+    .agent-podium[data-role="docs"].active .docs-page-r { animation: bookPageFlip 1.8s infinite ease-in-out; }
+
+    .role-label {
+      margin-top: 10px;
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+    }
+
+    .agent-podium.active .role-label {
+      color: var(--text);
+    }
+
+    /* Speech bubbles over podiums */
+    .speech-bubble {
+      position: absolute;
+      bottom: 125px;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid var(--panel-border-active);
+      border-radius: 14px;
+      padding: 8px 12px;
+      font-size: 12px;
+      width: 160px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      opacity: 0;
+      transform: translateY(8px) scale(0.9);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 50%;
+      transform: translateX(-50%) rotate(45deg);
+      width: 10px;
+      height: 10px;
+      background: rgba(15, 23, 42, 0.95);
+      border-right: 1px solid var(--panel-border-active);
+      border-bottom: 1px solid var(--panel-border-active);
+    }
+
+    .agent-podium.active .speech-bubble.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    /* Interactive Draggable SVG Graph */
+    .graph-panel {
+      min-height: 380px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .graph-canvas-wrap {
+      flex-grow: 1;
+      background: #020408;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      min-height: 280px;
+      box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+    }
+
+    #graph-svg {
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    .graph-node {
+      cursor: grab;
+      transition: filter 0.2s ease;
+    }
+
+    .graph-node:active {
+      cursor: grabbing;
+    }
+
+    .graph-node rect {
+      fill: #0c1224;
+      stroke: var(--panel-border);
+      stroke-width: 1.5;
+      rx: 12px;
+      transition: fill 0.25s, stroke 0.25s;
+    }
+
+    .graph-node:hover rect {
+      stroke: rgba(255,255,255,0.25);
+    }
+
+    .graph-node.active rect {
+      fill: #0b1a3d;
+      stroke: var(--c-planner);
+      stroke-width: 2;
+    }
+
+    .graph-node.done rect {
+      stroke: var(--c-tester);
+    }
+
+    .graph-node.blocked rect {
+      stroke: var(--c-alert);
+    }
+
+    .graph-connection-line {
+      fill: none;
+      stroke: #334155;
+      stroke-width: 2.5;
+      transition: stroke 0.3s, stroke-width 0.3s;
+    }
+
+    .graph-connection-line.active {
+      stroke: var(--c-planner);
+      stroke-width: 3.5;
+      stroke-dasharray: 6 4;
+      animation: dashMove 0.8s linear infinite;
+    }
+
+    .graph-connection-line.blocked {
+      stroke: var(--c-alert);
+      stroke-width: 3.5;
+      stroke-dasharray: 5 3;
+      animation: dashMove 0.4s linear infinite;
+    }
+
+    /* Dynamic Kanban Board */
+    .kanban-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kanban-column {
+      background: rgba(255,255,255,0.01);
+      border: 1px solid var(--panel-border);
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 250px;
+    }
+
+    .kanban-column h3 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+      padding-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .kanban-card {
+      background: #080d18;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .kanban-card:hover {
+      border-color: var(--panel-border-active);
+      transform: translateY(-1px);
+    }
+
+    .kanban-card.selected {
+      border-color: var(--c-planner);
+      background: #0a172e;
+      box-shadow: 0 0 10px rgba(0, 210, 255, 0.1);
+    }
+
+    .kanban-card .title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .kanban-card .meta-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .card-badge {
+      font-size: 9.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 20px;
+      background: rgba(255,255,255,0.04);
+      color: var(--muted);
+    }
+
+    .card-badge.status-ready { color: var(--c-planner); background: rgba(0, 210, 255, 0.08); }
+    .card-badge.status-work { color: var(--c-worker); background: rgba(255, 157, 0, 0.08); }
+    .card-badge.status-review { color: var(--c-reviewer); background: rgba(189, 0, 255, 0.08); }
+    .card-badge.status-done { color: var(--c-tester); background: rgba(0, 255, 135, 0.08); }
+    .card-badge.status-blocked { color: var(--c-alert); background: rgba(255, 60, 60, 0.08); }
+
+    /* Left col terminal layouts */
+    .console-panel {
+      background: #020408;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      padding: 16px;
+      font-family: 'Fira Code', monospace;
+      font-size: 12.5px;
+      line-height: 1.55;
+      height: 200px;
+      overflow-y: auto;
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+      color: #38bdf8;
+    }
+
+    /* Adaptive grid adjustments for sidebar */
+    .right-col {
+      max-height: 100%;
+    }
+
+    /* Live Chat/Event logs */
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      height: 310px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .chat-msg {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.015);
+      border: 1px solid var(--panel-border);
+      max-width: 90%;
+      animation: slideMsg 0.3s ease forwards;
+    }
+
+    .chat-msg.left { align-self: flex-start; border-top-left-radius: 3px; }
+    .chat-msg.right { align-self: flex-end; border-top-right-radius: 3px; background: rgba(255, 255, 255, 0.025); }
+
+    .chat-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .chat-body {
+      font-size: 12.5px;
+      line-height: 1.45;
+      color: #cbd5e1;
+    }
+
+    /* Task details split lists */
+    .details-split-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .detail-card {
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.01);
+      padding: 12px;
+    }
+
+    .detail-card h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .detail-card .content-text {
+      font-size: 12.5px;
+      line-height: 1.4;
+      color: #e2e8f0;
+    }
+
+    /* KEYFRAMES */
+    @keyframes spinBorder { 100% { transform: rotate(360deg); } }
+    @keyframes breatheBot { 0% { transform: translateY(0); } 100% { transform: translateY(-5px); } }
+    @keyframes spinCW { 100% { transform: rotate(360deg); } }
+    @keyframes spinCCW { 100% { transform: rotate(-360deg); } }
+    @keyframes handTypeL { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+    @keyframes handTypeR { 0% { transform: translateY(0); } 100% { transform: translateY(-3px); } }
+    @keyframes scanBeam { 0% { transform: translateY(-3px) opacity(0.3); } 100% { transform: translateY(10px) opacity(0.8); } }
+    @keyframes bubbleRising {
+      0% { transform: translateY(6px) scale(0.6); opacity: 0.2; }
+      100% { transform: translateY(-16px) scale(1.1); opacity: 0; }
+    }
+    @keyframes bookPageFlip { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(0); } }
+    @keyframes pulseIndicator { 0% { opacity: 0.6; } 100% { opacity: 1; } }
+    @keyframes dashMove { 100% { stroke-dashoffset: -20; } }
+    @keyframes slideMsg { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* RESPONSIVE LAYOUTS (ADAPTIVE DESIGN) */
+    @media (max-width: 1250px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+      .summary-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (max-width: 768px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .kanban-grid {
+        grid-template-columns: 1fr;
+      }
+      .details-split-grid {
+        grid-template-columns: 1fr;
+      }
+      .agent-stage-inner {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+      }
+      .agent-laser-track {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="dashboard-grid">
+
+    <!-- Top Header -->
+    <header>
+      <div class="brand">
+        <h1>TASK-PLAN v2 Arena <span style="font-size: 11px; vertical-align: top; background: rgba(0, 210, 255, 0.1); color: var(--c-planner); padding: 2px 8px; border-radius: 8px; margin-left: 6px; font-weight: 700;">UNIFIED</span></h1>
+        <p data-i18n="subtitle">Интерактивная панель управления с координируемой схемой связей</p>
+      </div>
+      <div class="controls">
+        <button class="audio-toggle" id="btn-audio" title="Включить звуковое сопровождение (Web Audio API)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        </button>
+        <button class="btn btn-primary" id="btn-play" data-i18n="btnPlay">Запуск симулятора</button>
+        <button class="btn" id="btn-next" data-i18n="btnNext">Следующий шаг</button>
+        <button class="btn btn-danger" id="btn-fail" data-i18n="btnFail">Сбой автотеста</button>
+        <button class="btn" id="btn-reset" data-i18n="btnReset">Сброс</button>
+      </div>
+    </header>
+
+    <!-- Language & Audio Settings Panel -->
+    <div class="settings-bar">
+      <!-- Language selector -->
+      <div class="setting-item">
+        <label for="lang-selector">🌐 Language / Язык:</label>
+        <select id="lang-selector">
+          <option value="en">English (US)</option>
+          <option value="ru">Русский (RU)</option>
+          <option value="es">Español (ES)</option>
+          <option value="fr">Français (FR)</option>
+          <option value="de">Deutsch (DE)</option>
+          <option value="zh">中文 (ZH)</option>
+          <option value="ja">日本語 (JA)</option>
+        </select>
+      </div>
+
+      <!-- TTS Toggle -->
+      <div class="setting-item">
+        <label><input type="checkbox" id="chk-tts"> 🗣️ Voice Over (TTS)</label>
+      </div>
+
+      <!-- Playlist uploader -->
+      <div class="setting-item">
+        <label>🎵 Background Music:</label>
+        <input type="file" id="bgm-uploader" multiple accept="audio/*" style="display:none;">
+        <button class="btn" onclick="document.getElementById('bgm-uploader').click()">Choose Files</button>
+        <span id="bgm-status">No tracks loaded</span>
+      </div>
+
+      <!-- Custom Sound config toggler -->
+      <div class="setting-item">
+        <label>⚙️ Process Sounds:</label>
+        <button class="btn" id="btn-custom-sounds-toggle">Configure Sounds</button>
+      </div>
+    </div>
+
+    <!-- Config sounds modal-like popover -->
+    <div id="sound-config-modal" style="display: none; padding: 16px; margin-bottom: 16px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; backdrop-filter: blur(15px); grid-column: 1 / -1;">
+      <h4 style="margin-top:0; margin-bottom:12px; font-size:13px; color:var(--c-planner);">Upload Custom Sound FX (.mp3, .wav, etc.)</h4>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
+        <div class="custom-sound-upload-row">
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Typing FX (Печать):</span>
+          <input type="file" accept="audio/*" class="sound-uploader" data-sound-type="type">
+        </div>
+        <div class="custom-sound-upload-row">
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Sweep Start FX (Свип):</span>
+          <input type="file" accept="audio/*" class="sound-uploader" data-sound-type="sweep">
+        </div>
+        <div class="custom-sound-upload-row">
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Step Complete FX (Пузыри):</span>
+          <input type="file" accept="audio/*" class="sound-uploader" data-sound-type="bubble">
+        </div>
+        <div class="custom-sound-upload-row">
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Success FX (Успех):</span>
+          <input type="file" accept="audio/*" class="sound-uploader" data-sound-type="success">
+        </div>
+        <div class="custom-sound-upload-row">
+          <span style="font-size:11px; color:var(--muted); display:block; margin-bottom:4px;">Failure FX (Сбой):</span>
+          <input type="file" accept="audio/*" class="sound-uploader" data-sound-type="failure">
+        </div>
+      </div>
+    </div>
+
+    <!-- Summary Metrics Block (Full width equivalent inside adaptive wrapper) -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="label" data-i18n="statTotalLabel">Всего задач</div>
+        <div class="value" id="stat-total">4</div>
+        <div class="subtle-hint" data-i18n="statTotalSub">Описаны в Task Register</div>
+      </div>
+      <div class="summary-card">
+        <div class="label" data-i18n="statDoneLabel">Завершено</div>
+        <div class="value" id="stat-done">0</div>
+        <div class="subtle-hint" data-i18n="statDoneSub">Прошли проверку Docs</div>
+      </div>
+      <div class="summary-card">
+        <div class="label" data-i18n="statReviewLabel">Очередь Ревью</div>
+        <div class="value" id="stat-review">0</div>
+        <div class="subtle-hint" data-i18n="statReviewSub">Задачи "Needs Review"</div>
+      </div>
+      <div class="summary-card">
+        <div class="label" data-i18n="statTestLabel">Очередь Тестов</div>
+        <div class="value" id="stat-test">0</div>
+        <div class="subtle-hint" data-i18n="statTestSub">Задачи "Approved"</div>
+      </div>
+      <div class="summary-card">
+        <div class="label" data-i18n="statWarnLabel">Предупреждения</div>
+        <div class="value" id="stat-warn">0</div>
+        <div class="subtle-hint" data-i18n="statWarnSub">Несоответствия комплаенсу</div>
+      </div>
+      <div class="summary-card" style="min-width: 160px;">
+        <div class="label" data-i18n="statPrepLabel">Feature Preparation</div>
+        <div class="value" id="stat-prep">0%</div>
+        <div class="prep-progress-bar"><div class="prep-progress-fill" id="prep-fill"></div></div>
+      </div>
+    </div>
+
+    <!-- LEFT COLUMN: Draggable Graph, Kanban Board, Terminal Monitor -->
+    <div class="left-col">
+
+      <!-- Interactive Draggable SVG Graph -->
+      <section class="panel graph-panel" id="panel-dependency-graph">
+        <div class="panel-title" style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span data-i18n="panelGraph">Схема взаимосвязей (Draggable Graph)</span> <span class="subtitle-text" data-i18n="panelGraphSub" style="margin-left:8px; font-size:11px; font-weight:normal;">Перетащите узлы для кастомизации сетки</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-sm" id="btn-reset-zoom" data-i18n="btnResetZoom" style="padding: 3px 8px; font-size: 11px;">🔍 Reset View</button>
+            <button class="btn btn-sm" id="btn-toggle-fullscreen" data-i18n="btnToggleFullscreen" style="padding: 3px 8px; font-size: 11px;">⛶ Fullscreen</button>
+          </div>
+        </div>
+        <div class="graph-canvas-wrap" id="graph-container">
+          <svg id="graph-svg">
+            <defs>
+              <marker id="arrow" markerWidth="6" markerHeight="6" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L6,3 L0,6 z" fill="#334155"/>
+              </marker>
+              <marker id="arrow-active" markerWidth="6" markerHeight="6" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L6,3 L0,6 z" fill="var(--c-planner)"/>
+              </marker>
+              <marker id="arrow-alert" markerWidth="6" markerHeight="6" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L6,3 L0,6 z" fill="var(--c-alert)"/>
+              </marker>
+            </defs>
+
+            <!-- Transform group containing all lines and nodes -->
+            <g id="graph-viewport-group">
+              <!-- Connection lines (Edges) -->
+              <path id="edge-t001-t002" class="graph-connection-line" d="" marker-end="url(#arrow)" />
+              <path id="edge-t002-t003" class="graph-connection-line" d="" marker-end="url(#arrow)" />
+              <path id="edge-t003-t004" class="graph-connection-line" d="" marker-end="url(#arrow)" />
+
+              <!-- Draggable Nodes (Group elements) -->
+              <g class="graph-node" id="node-t001" data-task-id="T-001" transform="translate(40, 90)">
+                <rect width="180" height="70" />
+                <circle cx="16" cy="16" r="5" fill="var(--muted)" />
+                <text x="28" y="20" fill="#fff" font-size="12" font-weight="700" font-family="Fira Code">T-001</text>
+                <text x="14" y="44" fill="var(--muted)" font-size="11" id="text-t001-title">Спецификация скоупа</text>
+                <text x="14" y="58" fill="var(--c-planner)" font-size="10" font-weight="600" id="text-t001-owner">PLANNER</text>
+              </g>
+
+              <g class="graph-node" id="node-t002" data-task-id="T-002" transform="translate(300, 30)">
+                <rect width="180" height="70" />
+                <circle cx="16" cy="16" r="5" fill="var(--muted)" />
+                <text x="28" y="20" fill="#fff" font-size="12" font-weight="700" font-family="Fira Code">T-002</text>
+                <text x="14" y="44" fill="var(--muted)" font-size="11" id="text-t002-title">Роуты авторизации</text>
+                <text x="14" y="58" fill="var(--muted)" font-size="10" font-weight="600" id="text-t002-owner">UNASSIGNED</text>
+              </g>
+
+              <g class="graph-node" id="node-t003" data-task-id="T-003" transform="translate(300, 160)">
+                <rect width="180" height="70" />
+                <circle cx="16" cy="16" r="5" fill="var(--muted)" />
+                <text x="28" y="20" fill="#fff" font-size="12" font-weight="700" font-family="Fira Code">T-003</text>
+                <text x="14" y="44" fill="var(--muted)" font-size="11" id="text-t003-title">Фронтенд Логин/Панель</text>
+                <text x="14" y="58" fill="var(--muted)" font-size="10" font-weight="600" id="text-t003-owner">UNASSIGNED</text>
+              </g>
+
+              <g class="graph-node" id="node-t004" data-task-id="T-004" transform="translate(560, 95)">
+                <rect width="180" height="70" />
+                <circle cx="16" cy="16" r="5" fill="var(--muted)" />
+                <text x="28" y="20" fill="#fff" font-size="12" font-weight="700" font-family="Fira Code">T-004</text>
+                <text x="14" y="44" fill="var(--muted)" font-size="11" id="text-t004-title">Синхронизация Wiki</text>
+                <text x="14" y="58" fill="var(--muted)" font-size="10" font-weight="600" id="text-t004-owner">UNASSIGNED</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <!-- Dynamic Kanban Board -->
+      <section class="panel">
+        <div class="panel-title" data-i18n="panelKanban">Доска задач (Kanban Board)</div>
+        <div class="kanban-grid">
+          <!-- Column 1 -->
+          <div class="kanban-column" id="k-col-1">
+            <h3>Draft / Ready</h3>
+            <div class="kanban-card selected" id="card-t001" data-task-id="T-001">
+              <div class="title">T-001: Спецификация скоупа</div>
+              <div class="meta-badges">
+                <span class="card-badge status-ready" id="badge-t001">ready</span>
+                <span class="card-badge">Planner</span>
+              </div>
+            </div>
+          </div>
+          <!-- Column 2 -->
+          <div class="kanban-column" id="k-col-2">
+            <h3>In Progress / Needs Review</h3>
+            <div class="kanban-card" id="card-t002" data-task-id="T-002">
+              <div class="title">T-002: Роуты авторизации</div>
+              <div class="meta-badges">
+                <span class="card-badge" id="badge-t002">draft</span>
+                <span class="card-badge">Worker</span>
+              </div>
+            </div>
+          </div>
+          <!-- Column 3 -->
+          <div class="kanban-column" id="k-col-3">
+            <h3>Approved / Blocked</h3>
+            <div class="kanban-card" id="card-t003" data-task-id="T-003">
+              <div class="title">T-003: Фронтенд Логин/Панель</div>
+              <div class="meta-badges">
+                <span class="card-badge" id="badge-t003">draft</span>
+                <span class="card-badge">Worker</span>
+              </div>
+            </div>
+          </div>
+          <!-- Column 4 -->
+          <div class="kanban-column" id="k-col-4">
+            <h3>Done / Dropped</h3>
+            <div class="kanban-card" id="card-t004" data-task-id="T-004">
+              <div class="title">T-004: Синхронизация Wiki</div>
+              <div class="meta-badges">
+                <span class="card-badge" id="badge-t004">draft</span>
+                <span class="card-badge">Docs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Terminal Output -->
+      <section class="panel">
+        <div class="panel-title" data-i18n="panelTerminal">Системные Логи (Terminal Monitor)</div>
+        <div class="console-panel" id="terminal-console"></div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT COLUMN: Agent Stage, Details, Chat Logs -->
+    <div class="right-col">
+
+      <!-- Agent Stage (Robots) -->
+      <section class="panel">
+        <div class="panel-title">
+          <span data-i18n="panelPipeline">Активный пайплайн агентов</span> <span class="subtitle" data-i18n="panelPipelineSub">Показывает текущую зону ответственности</span>
+        </div>
+        <div class="agent-stage-inner">
+          <div class="agent-laser-track">
+            <div class="agent-laser-beam" id="agent-laser-beam"></div>
+          </div>
+
+          <!-- Planner -->
+          <div class="agent-podium active" data-role="planner">
+            <div class="speech-bubble" id="bubble-planner"></div>
+            <div class="avatar-wrap">
+              <svg class="bot-svg" viewBox="0 0 64 64">
+                <circle cx="32" cy="28" r="18" fill="rgba(0, 210, 255, 0.05)" stroke="var(--c-planner)" stroke-width="1.5"/>
+                <circle class="gear-cw" cx="32" cy="28" r="12" fill="none" stroke="var(--c-planner)" stroke-width="0.8" stroke-dasharray="3 3"/>
+                <circle class="gear-ccw" cx="32" cy="28" r="7" fill="none" stroke="var(--c-planner)" stroke-width="1" stroke-dasharray="4 2"/>
+                <rect x="21" y="27" width="22" height="3" rx="1.5" fill="#020408"/>
+                <rect x="23" y="28" width="18" height="1.2" rx="0.6" fill="#00ffff" />
+                <path d="M 24 46 L 40 46 L 37 56 L 27 56 Z" fill="#1b2a4a" />
+              </svg>
+            </div>
+            <div class="role-label">Planner</div>
+          </div>
+
+          <!-- Worker -->
+          <div class="agent-podium" data-role="worker">
+            <div class="speech-bubble" id="bubble-worker"></div>
+            <div class="avatar-wrap">
+              <svg class="bot-svg" viewBox="0 0 64 64">
+                <rect x="18" y="14" width="28" height="24" rx="6" fill="#1e293b" stroke="var(--c-worker)" stroke-width="1.5"/>
+                <path id="worker-eyes" d="M 24 25 L 29 25 M 35 25 L 40 25" stroke="var(--c-worker)" stroke-width="2.5" stroke-linecap="round"/>
+                <rect x="28" y="38" width="8" height="8" fill="#0f172a" stroke="#475569" stroke-width="1"/>
+                <path d="M 20 46 L 44 46 L 40 56 L 24 56 Z" fill="#334155"/>
+                <g class="worker-hand-l"><circle cx="18" cy="51" r="3.5" fill="#f8fafc" stroke="var(--c-worker)" stroke-width="1"/></g>
+                <g class="worker-hand-r"><circle cx="46" cy="51" r="3.5" fill="#f8fafc" stroke="var(--c-worker)" stroke-width="1"/></g>
+              </svg>
+            </div>
+            <div class="role-label">Worker</div>
+          </div>
+
+          <!-- Reviewer -->
+          <div class="agent-podium" data-role="reviewer">
+            <div class="speech-bubble" id="bubble-reviewer"></div>
+            <div class="avatar-wrap">
+              <svg class="bot-svg" viewBox="0 0 64 64">
+                <path d="M 32 10 L 48 36 L 16 36 Z" fill="#2e1065" stroke="var(--c-reviewer)" stroke-width="1.5"/>
+                <rect x="28" y="36" width="8" height="10" fill="#1e1b4b"/>
+                <path d="M 22 46 L 42 46 L 38 56 L 26 56 Z" fill="#4c1d95"/>
+                <circle cx="32" cy="25" r="5" fill="#020617" stroke="var(--c-reviewer)" stroke-width="1.2"/>
+                <polygon class="reviewer-laser" points="32,25 15,56 49,56" fill="rgba(189, 0, 255, 0.15)"/>
+              </svg>
+            </div>
+            <div class="role-label">Reviewer</div>
+          </div>
+
+          <!-- Tester -->
+          <div class="agent-podium" data-role="tester">
+            <div class="speech-bubble" id="bubble-tester"></div>
+            <div class="avatar-wrap">
+              <svg class="bot-svg" viewBox="0 0 64 64">
+                <path d="M 20 16 C 20 16 20 8 32 8 C 44 8 44 16 44 16 L 42 38 C 42 38 42 42 32 42 C 22 42 22 38 22 38 Z" fill="#064e3b" stroke="var(--c-tester)" stroke-width="1.5"/>
+                <rect x="27" y="42" width="10" height="8" fill="#022c22"/>
+                <rect x="25" y="18" width="14" height="10" rx="2" fill="#022c22"/>
+                <circle class="b-flask-1" cx="16" cy="50" r="2.5" fill="var(--c-tester)"/>
+                <circle class="b-flask-1" cx="48" cy="46" r="2.5" fill="var(--c-tester)"/>
+              </svg>
+            </div>
+            <div class="role-label">Tester</div>
+          </div>
+
+          <!-- Docs -->
+          <div class="agent-podium" data-role="docs">
+            <div class="speech-bubble" id="bubble-docs"></div>
+            <div class="avatar-wrap">
+              <svg class="bot-svg" viewBox="0 0 64 64">
+                <ellipse cx="32" cy="18" rx="12" ry="9" fill="#4d0023" stroke="var(--c-docs)" stroke-width="1.5"/>
+                <g class="docs-page-r">
+                  <path d="M 32 30 C 40 26 48 30 48 30 L 46 44 C 46 44 40 40 32 44 Z" fill="rgba(255, 0, 123, 0.2)" stroke="var(--c-docs)" stroke-width="1"/>
+                </g>
+                <path d="M 32 30 C 24 26 16 30 16 30 L 18 44 C 18 44 24 40 32 44 Z" fill="rgba(255, 0, 123, 0.15)" stroke="var(--c-docs)" stroke-width="1"/>
+                <rect x="29" y="44" width="6" height="10" fill="#4d0023"/>
+              </svg>
+            </div>
+            <div class="role-label">Docs</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Task Details Panel -->
+      <section class="panel">
+        <div class="panel-title" data-i18n="panelDetails">Детализация Активной Задачи</div>
+        <div class="details-split-grid">
+          <div class="detail-card">
+            <h4 data-i18n="panelDetailsGoal">Цель и Скоуп</h4>
+            <div class="content-text" id="det-goal">-</div>
+          </div>
+          <div class="detail-card">
+            <h4 data-i18n="panelDetailsVerify">Стратегия проверки</h4>
+            <div class="content-text" id="det-verification">-</div>
+          </div>
+          <div class="detail-card">
+            <h4 data-i18n="panelDetailsDeps">Зависимости и Блокировки</h4>
+            <div class="content-text" id="det-dependencies">-</div>
+          </div>
+          <div class="detail-card">
+            <h4 data-i18n="panelDetailsGov">Предупреждения комплаенса</h4>
+            <div class="content-text" id="det-governance" style="color: var(--c-tester);">Проверок не нарушено</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Execution State Panel -->
+      <section class="panel">
+        <div class="panel-title" data-i18n="panelState">Состояние системы (Execution State)</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="task-meta-item">
+            <span data-i18n="panelStateCommit">Активный коммит</span>
+            <span id="exec-commit" style="font-family: 'Fira Code', monospace; font-size: 12px; color: var(--c-planner);">sha-8fa19bc2</span>
+          </div>
+          <div class="task-meta-item">
+            <span data-i18n="panelStateStep">Текущий шаг</span>
+            <span id="exec-step">-</span>
+          </div>
+          <div class="task-meta-item">
+            <span data-i18n="panelStateUpdated">Обновлено</span>
+            <span id="exec-updated" style="color: var(--muted);">-</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chat Logs -->
+      <section class="panel" style="flex-grow: 1;">
+        <div class="panel-title" data-i18n="panelChat">Эфир Агентов (События)</div>
+        <div class="chat-container" id="chat-logs"></div>
+      </section>
+
+    </div>
+
+  </div>
+
+  <!-- Floating BGM Drawer Button -->
+  <button class="audio-drawer-toggle" id="btn-audio-drawer" title="Audio Controller">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+      <path d="M9 18V5l12-2v13"/>
+      <circle cx="6" cy="18" r="3"/>
+      <circle cx="18" cy="16" r="3"/>
+    </svg>
+  </button>
+
+  <!-- Sliding Audio Drawer -->
+  <div class="audio-drawer" id="audio-drawer-panel">
+    <h3>
+      <span data-i18n="audioControlTitle">Audio Panel</span>
+      <button id="btn-close-audio-drawer">✖</button>
+    </h3>
+
+    <!-- Track Info -->
+    <div class="bgm-track-info">
+      <div class="bgm-track-title" id="drawer-bgm-title">No BGM Active</div>
+      <div class="bgm-track-meta">
+        <span data-i18n="nowPlayingLabel">Now Playing</span>
+        <span id="drawer-bgm-index">0 / 0</span>
+      </div>
+    </div>
+
+    <!-- Music Volume Slider -->
+    <div class="audio-control-row">
+      <label>
+        <span data-i18n="bgmVolumeLabel">BGM Volume</span>
+        <span class="val" id="val-bgm-vol">25%</span>
+      </label>
+      <input type="range" id="slider-bgm-vol" min="0" max="100" value="25">
+    </div>
+
+    <!-- SFX Volume Slider -->
+    <div class="audio-control-row">
+      <label>
+        <span data-i18n="sfxVolumeLabel">SFX Volume</span>
+        <span class="val" id="val-sfx-vol">30%</span>
+      </label>
+      <input type="range" id="slider-sfx-vol" min="0" max="100" value="30">
+    </div>
+
+    <!-- Controls -->
+    <div class="audio-buttons">
+      <button class="btn" id="drawer-btn-play-pause" style="flex:1.2;">▶ Play</button>
+      <button class="btn" id="drawer-btn-next" data-i18n="btnNextTrack">Next Track</button>
+    </div>
+  </div>
+
+  <script>
+    // --- ERROR LOGGER BANNER FOR DEBBUGING ---
+    window.onerror = function(msg, url, line, col, error) {
+      const errDiv = document.createElement('div');
+      errDiv.style.position = 'fixed';
+      errDiv.style.top = '0';
+      errDiv.style.left = '0';
+      errDiv.style.width = '100%';
+      errDiv.style.background = '#ef4444';
+      errDiv.style.color = '#fff';
+      errDiv.style.padding = '15px';
+      errDiv.style.zIndex = '99999';
+      errDiv.style.fontFamily = 'monospace';
+      errDiv.style.fontSize = '14px';
+      errDiv.style.whiteSpace = 'pre-wrap';
+      errDiv.innerHTML = `<strong>JS ERROR:</strong> ${msg}<br>at ${url}:${line}:${col}<br>${error ? error.stack : ''}`;
+      document.body.appendChild(errDiv);
+      return false;
+    };
+    window.onunhandledrejection = function(event) {
+      const errDiv = document.createElement('div');
+      errDiv.style.position = 'fixed';
+      errDiv.style.top = '0';
+      errDiv.style.left = '0';
+      errDiv.style.width = '100%';
+      errDiv.style.background = '#f97316';
+      errDiv.style.color = '#fff';
+      errDiv.style.padding = '15px';
+      errDiv.style.zIndex = '99999';
+      errDiv.style.fontFamily = 'monospace';
+      errDiv.style.fontSize = '14px';
+      errDiv.innerHTML = `<strong>Unhandled Promise Rejection:</strong> ${event.reason}`;
+      document.body.appendChild(errDiv);
+    };
+
+    // --- CUSTOM PROCESS SOUND BUFFERS STATE ---
+    const customProcessSounds = {
+      type: null,
+      sweep: null,
+      bubble: null,
+      success: null,
+      failure: null
+    };
+
+    // --- SOUND ENGINE (Web Audio API Synthesizer & Custom Player) ---
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = false;
+      }
+
+      init() {
+        if (this.ctx) return;
+        this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+        this.enabled = true;
+      }
+
+      playCustomBuffer(buffer, volume = 0.5) {
+        if (!this.enabled || !this.ctx || !buffer) return false;
+        try {
+          const source = this.ctx.createBufferSource();
+          const gain = this.ctx.createGain();
+          source.buffer = buffer;
+          gain.gain.setValueAtTime(volume * sfxVolume, this.ctx.currentTime);
+          source.connect(gain);
+          gain.connect(this.ctx.destination);
+          source.start(0);
+          return true;
+        } catch (e) {
+          console.warn("Failed to play custom buffer:", e);
+          return false;
+        }
+      }
+
+      playTone(freq, type, duration, volume = 0.1) {
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gainNode = this.ctx.createGain();
+
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+          gainNode.gain.setValueAtTime(volume * sfxVolume, this.ctx.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+
+          osc.connect(gainNode);
+          gainNode.connect(this.ctx.destination);
+
+          osc.start();
+          osc.stop(this.ctx.currentTime + duration);
+        } catch (e) {
+          console.warn(e);
+        }
+      }
+
+      playBeep() { this.playTone(880, 'sine', 0.1, 0.08); }
+
+      playTyping() {
+        if (customProcessSounds.type && this.playCustomBuffer(customProcessSounds.type, 0.15)) return;
+        const freq = 500 + Math.random() * 500;
+        this.playTone(freq, 'triangle', 0.03, 0.03);
+      }
+
+      playSweep() {
+        if (customProcessSounds.sweep && this.playCustomBuffer(customProcessSounds.sweep, 0.3)) return;
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, this.ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(800, this.ctx.currentTime + 0.35);
+          gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 0.35);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.35);
+        } catch(e){}
+      }
+
+      playBubble() {
+        if (customProcessSounds.bubble && this.playCustomBuffer(customProcessSounds.bubble, 0.25)) return;
+        const freq = 400 + Math.random() * 200;
+        this.playTone(freq, 'sine', 0.08, 0.03);
+      }
+
+      playSuccess() {
+        if (customProcessSounds.success && this.playCustomBuffer(customProcessSounds.success, 0.4)) return;
+        if (!this.enabled || !this.ctx) return;
+        const now = this.ctx.currentTime;
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          setTimeout(() => {
+            this.playTone(freq, 'sine', 0.4, 0.05);
+          }, idx * 75);
+        });
+      }
+
+      playFailure() {
+        if (customProcessSounds.failure && this.playCustomBuffer(customProcessSounds.failure, 0.5)) return;
+        if (!this.enabled || !this.ctx) return;
+        try {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(220, this.ctx.currentTime);
+          osc.frequency.linearRampToValueAtTime(80, this.ctx.currentTime + 0.55);
+          gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+          gain.gain.linearRampToValueAtTime(0.0001, this.ctx.currentTime + 0.55);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start();
+          osc.stop(this.ctx.currentTime + 0.55);
+        } catch(e){}
+      }
+    }
+
+    const sound = new SoundEngine();
+
+    // Toggle sound button
+    const btnAudio = document.getElementById('btn-audio');
+    btnAudio.addEventListener('click', () => {
+      sound.init();
+      if (sound.enabled) {
+        sound.ctx.resume().then(() => {
+          btnAudio.classList.toggle('active');
+          if (!btnAudio.classList.contains('active')) {
+            sound.enabled = false;
+            bgmPlayer.pause();
+          } else {
+            sound.enabled = true;
+            sound.playSuccess();
+            playBGM();
+          }
+        });
+      }
+    });
+
+    // BGM Player state
+    let bgmPlaylist = [];
+    let bgmIndex = 0;
+    let bgmFileList = [];
+    const bgmPlayer = new Audio();
+    let sfxVolume = 0.3; // Default 30%
+    let bgmVolume = 0.25; // Default 25%
+    bgmPlayer.volume = bgmVolume;
+
+    function playBGM() {
+      if (bgmPlaylist.length === 0 || !sound.enabled) {
+        const titleEl = document.getElementById('drawer-bgm-title');
+        const indexEl = document.getElementById('drawer-bgm-index');
+        if (titleEl) titleEl.textContent = currentLanguage === 'ru' ? 'Нет активной музыки' : 'No BGM Active';
+        if (indexEl) indexEl.textContent = '0 / 0';
+        return;
+      }
+      bgmPlayer.src = bgmPlaylist[bgmIndex];
+      bgmPlayer.volume = bgmVolume;
+      bgmPlayer.play().catch(err => console.log("BGM play interrupted:", err));
+
+      const titleEl = document.getElementById('drawer-bgm-title');
+      const indexEl = document.getElementById('drawer-bgm-index');
+      const filename = bgmFileList[bgmIndex] ? bgmFileList[bgmIndex].name : `Track ${bgmIndex + 1}`;
+      if (titleEl) titleEl.textContent = filename;
+      if (indexEl) indexEl.textContent = `${bgmIndex + 1} / ${bgmPlaylist.length}`;
+
+      const playPauseBtn = document.getElementById('drawer-btn-play-pause');
+      if (playPauseBtn) playPauseBtn.textContent = '⏸ Pause';
+
+      bgmPlayer.onended = () => {
+        bgmIndex = (bgmIndex + 1) % bgmPlaylist.length;
+        playBGM();
+      };
+    }
+
+    function toggleBGMPlayPause() {
+      if (bgmPlaylist.length === 0) return;
+      const playPauseBtn = document.getElementById('drawer-btn-play-pause');
+      if (bgmPlayer.paused) {
+        bgmPlayer.play().catch(err => console.log(err));
+        if (playPauseBtn) playPauseBtn.textContent = '⏸ Pause';
+      } else {
+        bgmPlayer.pause();
+        if (playPauseBtn) playPauseBtn.textContent = '▶ Play';
+      }
+    }
+
+    function playNextBGMTrack() {
+      if (bgmPlaylist.length === 0) return;
+      bgmIndex = (bgmIndex + 1) % bgmPlaylist.length;
+      playBGM();
+    }
+
+    function toggleAudioDrawer() {
+      const drawer = document.getElementById('audio-drawer-panel');
+      const toggleBtn = document.getElementById('btn-audio-drawer');
+      if (drawer && toggleBtn) {
+        const isOpen = drawer.classList.contains('open');
+        if (isOpen) {
+          drawer.classList.remove('open');
+          toggleBtn.classList.remove('active');
+        } else {
+          drawer.classList.add('open');
+          toggleBtn.classList.add('active');
+        }
+      }
+    }
+
+    // --- TRANSLATIONS DICTIONARY ---
+    const TRANSLATIONS = {
+      en: {
+        subtitle: "Interactive control panel with coordinated connection scheme",
+        btnPlay: "Start Simulator",
+        btnPause: "Pause",
+        btnNext: "Next Step",
+        btnFail: "Test Failure",
+        btnReset: "Reset",
+        statTotalLabel: "Total Tasks",
+        statTotalSub: "Described in Task Register",
+        statDoneLabel: "Completed",
+        statDoneSub: "Passed Docs verification",
+        statReviewLabel: "Review Queue",
+        statReviewSub: "Tasks 'Needs Review'",
+        statTestLabel: "Test Queue",
+        statTestSub: "Tasks 'Approved'",
+        statWarnLabel: "Warnings",
+        statWarnSub: "Compliance discrepancies",
+        statPrepLabel: "Feature Preparation",
+        panelGraph: "Connection Schema (Draggable Graph)",
+                panelGraphSub: "Drag nodes to customize grid",
+        btnResetZoom: "🔍 Reset View",
+        btnToggleFullscreen: "⛶ Fullscreen",
+        panelPipeline: "Active Agent Pipeline",
+        panelPipelineSub: "Shows current area of responsibility",
+        panelDetails: "Active Task Details",
+        panelDetailsGoal: "Goal & Scope",
+        panelDetailsVerify: "Verification Strategy",
+        panelDetailsDeps: "Dependencies & Blockers",
+        panelDetailsGov: "Compliance Warnings",
+        panelState: "System State (Execution State)",
+        panelStateCommit: "Active Commit",
+        panelStateStep: "Current Step",
+        panelStateUpdated: "Updated",
+        panelChat: "Agents Broadcast (Events)",
+        panelKanban: "Kanban Board",
+        panelTerminal: "System Logs (Terminal Monitor)",
+        colDraftReady: "Draft / Ready",
+        colWorkReview: "In Progress / Review",
+        colApprBlock: "Approved / Blocked",
+                colDoneDrop: "Done / Dropped",
+        govNoIssues: "No violations",
+        consoleReset: "[SYSTEM] Dashboard reset. Ready to run.",
+                consoleComplete: "\n[SYSTEM] Simulation completed successfully! Project ready for release.",
+        audioControlTitle: "Audio Panel",
+        bgmVolumeLabel: "BGM Volume",
+        sfxVolumeLabel: "SFX Volume",
+        nowPlayingLabel: "Now Playing",
+        btnNextTrack: "Next Track",
+        chatWaiting: "Waiting for simulation to start...",
+        failureLogs: {
+          cmd: "\n[TESTER] Command: npm run test:auth",
+          run: "[TESTER] Running integration tests...",
+          err: '[TESTER] Error: Test "User login with wrong credentials should return 401" failed!',
+          reason: '[TESTER] Reason: Expected status 401, received 500 (Internal Server Error)',
+          gov: '[TESTER] Compliance Violation: done task requires commands_run evidence.',
+          block: '[TESTER] Release blocked. Rollback task T-003.',
+          speech: 'Critical UI test failure! Empty password crash (code 500). Blocking!',
+          chat: 'E2E tests failed. Login crash on empty password. Returning task to Worker.'
+        }
+      },
+      ru: {
+        subtitle: "Интерактивная панель управления с координируемой схемой связей",
+        btnPlay: "Запуск симулятора",
+        btnPause: "Пауза",
+        btnNext: "Следующий шаг",
+        btnFail: "Сбой автотеста",
+        btnReset: "Сброс",
+        statTotalLabel: "Всего задач",
+        statTotalSub: "Описаны в Task Register",
+        statDoneLabel: "Завершено",
+        statDoneSub: "Прошли проверку Docs",
+        statReviewLabel: "Очередь Ревью",
+        statReviewSub: "Задачи \"Needs Review\"",
+        statTestLabel: "Очередь Тестов",
+        statTestSub: "Задачи \"Approved\"",
+        statWarnLabel: "Предупреждения",
+        statWarnSub: "Несоответствия комплаенсу",
+        statPrepLabel: "Feature Preparation",
+        panelGraph: "Схема взаимосвязей (Draggable Graph)",
+                panelGraphSub: "Перетащите узлы для кастомизации сетки",
+        btnResetZoom: "🔍 Сброс масштаба",
+        btnToggleFullscreen: "⛶ Во весь экран",
+        panelPipeline: "Активный пайплайн агентов",
+
+        panelPipelineSub: "Показывает текущую зону ответственности",
+        panelDetails: "Детализация Активной Задачи",
+        panelDetailsGoal: "Цель и Скоуп",
+        panelDetailsVerify: "Стратегия проверки",
+        panelDetailsDeps: "Зависимости и Блокировки",
+        panelDetailsGov: "Предупреждения комплаенса",
+        panelState: "Состояние системы (Execution State)",
+        panelStateCommit: "Активный коммит",
+        panelStateStep: "Текущий шаг",
+        panelStateUpdated: "Обновлено",
+        panelChat: "Эфир Агентов (События)",
+        panelKanban: "Доска задач (Kanban Board)",
+        panelTerminal: "Системные Логи (Terminal Monitor)",
+        colDraftReady: "Draft / Ready",
+        colWorkReview: "In Progress / Needs Review",
+        colApprBlock: "Approved / Blocked",
+                colDoneDrop: "Done / Dropped",
+        govNoIssues: "Нарушений нет",
+        consoleReset: "[SYSTEM] Дашборд сброшен. Готов к запуску.",
+                consoleComplete: "\n[SYSTEM] Симуляция успешно завершена! Проект готов к релизу.",
+        audioControlTitle: "Панель аудио",
+        bgmVolumeLabel: "Громкость музыки",
+        sfxVolumeLabel: "Громкость звуков",
+        nowPlayingLabel: "Сейчас играет",
+        btnNextTrack: "След. трек",
+        chatWaiting: "Ожидание запуска симуляции...",
+        failureLogs: {
+          cmd: "\n[TESTER] Команда: npm run test:auth",
+          run: "[TESTER] Запуск интеграционных автотестов...",
+          err: 'Ошибка: Тест "User login with wrong credentials should return 401" провален!',
+          reason: 'Причина: Ожидался статус 401, получен 500 (Internal Server Error)',
+          gov: 'Нарушение комплаенса: done task requires commands_run evidence.',
+          block: 'Блокировка релиза. Откат задачи T-003.',
+          speech: 'Критический сбой автотеста UI! Найдена уязвимость (код 500). Блокирую!',
+          chat: 'Автотесты провалены. Обнаружен краш авторизации при пустом вводе. Возвращаю Worker-у.'
+        }
+      },
+      es: {
+        subtitle: "Panel de control interactivo con esquema de conexiones coordinadas",
+        btnPlay: "Iniciar simulador",
+        btnPause: "Pausa",
+        btnNext: "Siguiente paso",
+        btnFail: "Fallo de autotests",
+        btnReset: "Restablecer",
+        statTotalLabel: "Total Tareas",
+        statTotalSub: "Descrito en Task Register",
+        statDoneLabel: "Completado",
+        statDoneSub: "Aprobó verificación de Docs",
+        statReviewLabel: "Cola de revisión",
+        statReviewSub: "Tareas 'Needs Review'",
+        statTestLabel: "Cola de pruebas",
+        statTestSub: "Tareas 'Approved'",
+        statWarnLabel: "Advertencias",
+        statWarnSub: "Discrepancias de cumplimiento",
+        statPrepLabel: "Preparación de características",
+        panelGraph: "Esquema de conexiones (Draggable Graph)",
+        panelGraphSub: "Arrastra los nodos para personalizar la cuadrícula",
+        panelPipeline: "Flujo de agentes activos",
+        panelPipelineSub: "Muestra el área de responsabilidad actual",
+        panelDetails: "Detalles de la tarea activa",
+        panelDetailsGoal: "Meta y alcance",
+        panelDetailsVerify: "Estrategia de verificación",
+        panelDetailsDeps: "Dependencias y bloqueos",
+        panelDetailsGov: "Advertencias de cumplimiento",
+        panelState: "Estado del sistema",
+        panelStateCommit: "Commit activo",
+        panelStateStep: "Paso actual",
+        panelStateUpdated: "Actualizado",
+        panelChat: "Emisión de agentes (Eventos)",
+        panelKanban: "Tablero Kanban",
+        panelTerminal: "Logs del sistema (Terminal Monitor)",
+        colDraftReady: "Borrador / Listo",
+        colWorkReview: "En progreso / Revisión",
+        colApprBlock: "Aprobado / Bloqueado",
+                colDoneDrop: "Hecho / Descartado",
+        govNoIssues: "Sin violaciones",
+        consoleReset: "[SYSTEM] Tablero restablecido. Listo para ejecutar.",
+                consoleComplete: "\n[SYSTEM] ¡Simulación completada con éxito! Proyecto listo para su lanzamiento.",
+        audioControlTitle: "Panel de audio",
+        bgmVolumeLabel: "Volumen de música",
+        sfxVolumeLabel: "Volumen de efectos",
+        nowPlayingLabel: "Reproduciendo",
+        btnNextTrack: "Siguiente",
+        chatWaiting: "Esperando a que comience la simulación...",
+        failureLogs: {
+          cmd: "\n[TESTER] Comando: npm run test:auth",
+          run: "[TESTER] Ejecutando pruebas de integración...",
+          err: 'Error: ¡Falló la prueba "User login with wrong credentials should return 401"!',
+          reason: 'Motivo: Se esperaba estado 401, recibido 500 (Error interno del servidor)',
+          gov: 'Violación de cumplimiento: la tarea realizada requiere evidencia de commands_run.',
+          block: 'Lanzamiento bloqueado. Tarea de reversión T-003.',
+          speech: '¡Fallo crítico de la prueba de interfaz de usuario! Bloqueando. Error 500.',
+          chat: 'Pruebas e2e fallidas. Choque de inicio de sesión con contraseña vacía. Devolviendo al trabajador.'
+        }
+      },
+      fr: {
+        subtitle: "Panneau de contrôle interactif avec schéma de connexions coordonnées",
+        btnPlay: "Lancer le simulateur",
+        btnPause: "Pause",
+        btnNext: "Étape suivante",
+        btnFail: "Échec du test",
+        btnReset: "Réinitialiser",
+        statTotalLabel: "Total des tâches",
+        statTotalSub: "Décrit dans Task Register",
+        statDoneLabel: "Terminé",
+        statDoneSub: "Vérification des Docs réussie",
+        statReviewLabel: "File de révision",
+        statReviewSub: "Tâches 'Needs Review'",
+        statTestLabel: "File de test",
+        statTestSub: "Tâches 'Approved'",
+        statWarnLabel: "Avertissements",
+        statWarnSub: "Écarts de conformité",
+        statPrepLabel: "Préparation des fonctionnalités",
+        panelGraph: "Schéma des connexions (Graphique déplaçable)",
+        panelGraphSub: "Faites glisser les nœuds pour personnaliser la grille",
+        panelPipeline: "Pipeline des agents actifs",
+        panelPipelineSub: "Affiche la zone de responsabilité actuelle",
+        panelDetails: "Détails de la tâche active",
+        panelDetailsGoal: "Objectif et portée",
+        panelDetailsVerify: "Stratégie de vérification",
+        panelDetailsDeps: "Dépendances et blocages",
+        panelDetailsGov: "Avertissements de conformité",
+        panelState: "État du système",
+        panelStateCommit: "Commit actif",
+        panelStateStep: "Étape actuelle",
+        panelStateUpdated: "Mis à jour",
+        panelChat: "Diffusion des agents (Événements)",
+        panelKanban: "Tableau Kanban",
+        panelTerminal: "Journaux système (Terminal Monitor)",
+        colDraftReady: "Brouillon / Prêt",
+        colWorkReview: "En cours / En révision",
+        colApprBlock: "Approuvé / Bloqué",
+                colDoneDrop: "Terminé / Abandonné",
+        govNoIssues: "Aucune violation",
+        consoleReset: "[SYSTEM] Tableau réinitialisé. Prêt à fonctionner.",
+                consoleComplete: "\n[SYSTEM] Simulation terminée avec succès ! Projet prêt pour le déploiement.",
+        audioControlTitle: "Panneau audio",
+        bgmVolumeLabel: "Volume musique",
+        sfxVolumeLabel: "Volume des effets",
+        nowPlayingLabel: "Lecture en cours",
+        btnNextTrack: "Suivant",
+        chatWaiting: "En attente du début de la simulation...",
+        failureLogs: {
+          cmd: "\n[TESTER] Commande : npm run test:auth",
+          run: "[TESTER] Exécution des tests d'intégration...",
+          err: 'Échec du test "User login with wrong credentials should return 401"!',
+          reason: 'Raison : statut 401 attendu, 500 reçu (Internal Server Error)',
+          gov: 'Violation de conformité : tâche terminée requiert la preuve commands_run.',
+          block: 'Déploiement bloqué. Restauration de la tâche T-003.',
+          speech: 'Échec critique des tests UI! Plantage mot de passe vide (code 500). Blocage !',
+          chat: 'Tests e2e échoués. Plantage de connexion sur mot de passe vide. Retour au développeur.'
+        }
+      },
+      de: {
+        subtitle: "Interaktives Kontrollzentrum mit koordiniertem Verbindungsschema",
+        btnPlay: "Simulator starten",
+        btnPause: "Pause",
+        btnNext: "Nächster Schritt",
+        btnFail: "Testfehler auslösen",
+        btnReset: "Zurücksetzen",
+        statTotalLabel: "Gesamte Aufgaben",
+        statTotalSub: "Im Task Register beschrieben",
+        statDoneLabel: "Abgeschlossen",
+        statDoneSub: "Docs-Verifizierung bestanden",
+        statReviewLabel: "Review-Warteschlange",
+        statReviewSub: "Aufgaben 'Needs Review'",
+        statTestLabel: "Test-Warteschlange",
+        statTestSub: "Aufgaben 'Approved'",
+        statWarnLabel: "Warnungen",
+        statWarnSub: "Compliance-Abweichungen",
+        statPrepLabel: "Feature-Vorbereitung",
+        panelGraph: "Verbindungsschema (Verschiebbarer Graph)",
+        panelGraphSub: "Knoten ziehen, um das Gitter anzupassen",
+        panelPipeline: "Aktive Agenten-Pipeline",
+        panelPipelineSub: "Zeigt den aktuellen Verantwortungsbereich",
+        panelDetails: "Details der aktiven Aufgabe",
+        panelDetailsGoal: "Ziel & Umfang",
+        panelDetailsVerify: "Verifizierungsstrategie",
+        panelDetailsDeps: "Abhängigkeiten & Blockaden",
+        panelDetailsGov: "Compliance-Warnungen",
+        panelState: "Systemzustand",
+        panelStateCommit: "Aktiver Commit",
+        panelStateStep: "Aktueller Schritt",
+        panelStateUpdated: "Aktualisiert",
+        panelChat: "Agenten-Übertragung (Ereignisse)",
+        panelKanban: "Kanban-Board",
+        panelTerminal: "Systemprotokolle (Terminal Monitor)",
+        colDraftReady: "Entwurf / Bereit",
+        colWorkReview: "In Arbeit / Review",
+        colApprBlock: "Genehmigt / Blockiert",
+                colDoneDrop: "Erledigt / Verworfene",
+        govNoIssues: "Keine Verstöße",
+        consoleReset: "[SYSTEM] Dashboard zurückgesetzt. Bereit zum Ausführen.",
+                consoleComplete: "\n[SYSTEM] Simulation erfolgreich abgeschlossen! Projekt bereit für den Release.",
+        audioControlTitle: "Audio-Panel",
+        bgmVolumeLabel: "Musik-Lautstärke",
+        sfxVolumeLabel: "Effekte-Lautstärke",
+        nowPlayingLabel: "Aktueller Titel",
+        btnNextTrack: "Nächster",
+        chatWaiting: "Warten auf den Start der Simulation...",
+        failureLogs: {
+          cmd: "\n[TESTER] Befehl: npm run test:auth",
+          run: "[TESTER] Integrationstests werden ausgeführt...",
+          err: 'Fehler: Test "User login with wrong credentials should return 401" fehlgeschlagen!',
+          reason: 'Grund: Status 401 erwartet, 500 erhalten (Internal Server Error)',
+          gov: 'Compliance-Verstoß: Erledigte Aufgabe erfordert commands_run-Nachweis.',
+          block: 'Freigabe blockiert. Rollback-Aufgabe T-003.',
+          speech: 'Kritischer UI-Testfehler! Absturz bei leerem Passwort (Code 500). Blockieren!',
+          chat: 'E2E-Tests fehlgeschlagen. Login-Absturz bei leerem Passwort. Aufgabe an Worker zurückgeben.'
+        }
+      },
+      zh: {
+        subtitle: "带协调连接方案的交互式控制面板",
+        btnPlay: "启动模拟器",
+        btnPause: "暂停",
+        btnNext: "下一步",
+        btnFail: "触发测试故障",
+        btnReset: "重置",
+        statTotalLabel: "任务总数",
+        statTotalSub: "在任务注册表中描述",
+        statDoneLabel: "已完成",
+        statDoneSub: "通过文档同步验证",
+        statReviewLabel: "待评审队列",
+        statReviewSub: "状态为 'Needs Review' 的任务",
+        statTestLabel: "待测试队列",
+        statTestSub: "状态为 'Approved' 的任务",
+        statWarnLabel: "警告信息",
+        statWarnSub: "合规性差异",
+        statPrepLabel: "功能准备进度",
+        panelGraph: "关联拓扑图 (可拖拽 SVG 节点)",
+        panelGraphSub: "拖动节点可自定义网格布局",
+        panelPipeline: "活动代理流水线",
+        panelPipelineSub: "展示当前角色职责区域",
+        panelDetails: "活动任务详细信息",
+        panelDetailsGoal: "开发目标与范围",
+        panelDetailsVerify: "测试与验证策略",
+        panelDetailsDeps: "依赖关系与阻碍物",
+        panelDetailsGov: "合规性警告",
+        panelState: "系统运行状态",
+        panelStateCommit: "当前活动 Commit",
+        panelStateStep: "当前执行步骤",
+        panelStateUpdated: "更新时间",
+        panelChat: "智能体广播 (实时事件)",
+        panelKanban: "任务看板 (Kanban Board)",
+        panelTerminal: "系统日志 (Terminal Monitor)",
+        colDraftReady: "草稿 / 准备就绪",
+        colWorkReview: "进行中 / 等待评审",
+        colApprBlock: "已批准 / 阻碍中",
+        colDoneDrop: "已完成 / 已废弃",
+        govNoIssues: "无合规性冲突",
+        consoleReset: "[SYSTEM] 面板重置。准备运行模拟。",
+        consoleComplete: "\n[SYSTEM] 模拟顺利完成！项目已准备好发布。"
+      },
+      ja: {
+        subtitle: "連動接続構成付きインタラクティブダッシュボード",
+        btnPlay: "シミュレーター起動",
+        btnPause: "一時停止",
+        btnNext: "次のステップ",
+        btnFail: "テスト失敗のトリガー",
+        btnReset: "リセット",
+        statTotalLabel: "総タスク数",
+        statTotalSub: "タスク登録簿に記載",
+        statDoneLabel: "完了済み",
+        statDoneSub: "ドキュメント同期確認済み",
+        statReviewLabel: "レビュー待ち",
+        statReviewSub: "要レビュー状態のタスク",
+        statTestLabel: "テスト待ち",
+        statTestSub: "承認済み状態のタスク",
+        statWarnLabel: "警告数",
+        statWarnSub: "コンプライアンス違反",
+        statPrepLabel: "フィーチャー準備状況",
+        panelGraph: "接続スキーマ (ドラッグ可能グラフ)",
+        panelGraphSub: "ノードをドラッグしてレイアウトを変更",
+        panelPipeline: "アクティブエージェントパイプライン",
+        panelPipelineSub: "現在の担当責任範囲を表示",
+        panelDetails: "選択中タスクの詳細",
+        panelDetailsGoal: "目標とスコープ",
+        panelDetailsVerify: "検証・テスト戦略",
+        panelDetailsDeps: "依存関係とブロック要因",
+        panelDetailsGov: "コンプライアンス警告",
+        panelState: "システムステータス",
+        panelStateCommit: "対象コミット",
+        panelStateStep: "実行ステップ",
+        panelStateUpdated: "更新日時",
+        panelChat: "エージェント通信 (イベント)",
+        panelKanban: "カンバンボード",
+        panelTerminal: "システムログ (Terminal Monitor)",
+        colDraftReady: "下書き / 準備完了",
+        colWorkReview: "進行中 / レビュー中",
+        colApprBlock: "承認済み / ブロック中",
+        colDoneDrop: "完了 / ドロップ",
+        govNoIssues: "規約違反なし",
+        consoleReset: "[SYSTEM] ダッシュボードがリセットされました。起動準備完了。",
+        consoleComplete: "\n[SYSTEM] シミュレーションが正常に完了しました！プロジェクトはリリース可能です。"
+      }
+    };
+
+    const execStepChangeText = {
+      en: (role, status) => `Agent ${role.toUpperCase()} changed task to ${status.toUpperCase()}`,
+      ru: (role, status) => `Агент ${role.toUpperCase()} перевел задачу в ${status.toUpperCase()}`,
+      es: (role, status) => `El agente ${role.toUpperCase()} cambió la tarea a ${status.toUpperCase()}`,
+      fr: (role, status) => `L'agent ${role.toUpperCase()} a changé la tâche en ${status.toUpperCase()}`,
+      de: (role, status) => `Agent ${role.toUpperCase()} hat die Aufgabe in ${status.toUpperCase()} geändert`,
+      zh: (role, status) => `代理 ${role.toUpperCase()} 将任务更改为 ${status.toUpperCase()}`,
+      ja: (role, status) => `エージェント ${role.toUpperCase()} がタスクを ${status.toUpperCase()} に変更しました`
+    };
+
+    // --- LOCALIZED TASKS DATABASE ---
+    const TASKS_LOCALIZED = {
+      en: {
+        'T-001': { title: 'T-001: Scope Specification', goal: 'Define feature scope (scope_in, scope_out) and analyze dependencies.', verification: 'Match README with project goals, check for no placeholders.', dependencies: 'None (Starting task)', governance: 'No violations', nodeTitle: 'Scope Spec' },
+        'T-002': { title: 'T-002: Auth Routes', goal: 'Implement password hashing (bcrypt) and JWT issuance in routes/auth.js.', verification: 'Unit tests of routes/auth.js, API integration checks.', dependencies: 'Limited by T-001 completion', governance: 'No violations', nodeTitle: 'Auth Routes' },
+        'T-003': { title: 'T-003: Login Form UI', goal: 'Build Login.js form, connect authentication state management.', verification: 'Cypress e2e scenarios for input, submit, and redirect.', dependencies: 'Blocked by T-002 completion', governance: 'No violations', nodeTitle: 'Login UI' },
+        'T-004': { title: 'T-004: Wiki Sync', goal: 'Document JWT session architecture and environment variables in docs/auth-architecture.md.', verification: 'Check links validation, verify content up-to-date.', dependencies: 'Blocked by T-003 completion', governance: 'No violations', nodeTitle: 'Wiki Sync' }
+      },
+      ru: {
+        'T-001': { title: 'T-001: Спецификация скоупа', goal: 'Сформировать скоуп фичи (scope_in, scope_out), проанализировать зависимости.', verification: 'Соответствие README целям проекта, отсутствие плейсхолдеров.', dependencies: 'Нет (Стартовая задача)', governance: 'Нарушений нет', nodeTitle: 'Спецификация скоупа' },
+        'T-002': { title: 'T-002: Роуты авторизации', goal: 'Реализовать хэширование паролей (bcrypt) и выпуск JWT в routes/auth.js.', verification: 'unit-тесты routes/auth.js, интеграционная проверка API.', dependencies: 'Ограничена выполнением T-001', governance: 'Нарушений нет', nodeTitle: 'Роуты авторизации' },
+        'T-003': { title: 'T-003: Фронтенд Логин/Панель', goal: 'Сверстать форму входа Login.js, подключить стейт-менеджмент авторизации.', verification: 'e2e сценарии Cypress на ввод, сабмит и перенаправление.', dependencies: 'Блокируется выполнением T-002', governance: 'Нарушений нет', nodeTitle: 'Фронтенд Логин' },
+        'T-004': { title: 'T-004: Синхронизация Wiki', goal: 'Описать архитектуру JWT-сессий и переменные окружения в docs/auth-architecture.md.', verification: 'Валидация ссылок link-checker, проверка актуальности контента.', dependencies: 'Блокируется выполнением T-003', governance: 'Нарушений нет', nodeTitle: 'Синхронизация Wiki' }
+      },
+      es: {
+        'T-001': { title: 'T-001: Espec de Alcance', goal: 'Definir el alcance de la característica (scope_in, scope_out) y analizar dependencias.', verification: 'Coincidencia del README con objetivos, sin marcadores de posición.', dependencies: 'Ninguna (Tarea inicial)', governance: 'Sin infracciones', nodeTitle: 'Espec de Alcance' },
+        'T-002': { title: 'T-002: Rutas de Auth', goal: 'Implementar hashing de contraseñas (bcrypt) y emisión de JWT en routes/auth.js.', verification: 'Pruebas unitarias de routes/auth.js, comprobaciones de API.', dependencies: 'Limitado por la finalización de T-001', governance: 'Sin infracciones', nodeTitle: 'Rutas de Auth' },
+        'T-003': { title: 'T-003: UI Login', goal: 'Construir formulario Login.js, conectar la gestión de estado de autenticación.', verification: 'Escenarios e2e de Cypress para entrada, envío y redirección.', dependencies: 'Bloqueado por la finalización de T-002', governance: 'Sin infracciones', nodeTitle: 'UI Login' },
+        'T-004': { title: 'T-004: Sinc de Wiki', goal: 'Documentar la arquitectura de sesión JWT y variables de entorno en docs/auth-architecture.md.', verification: 'Verificar validación de enlaces, verificar contenido actualizado.', dependencies: 'Bloqueado por la finalización de T-003', governance: 'Sin infracciones', nodeTitle: 'Sinc de Wiki' }
+      },
+      fr: {
+        'T-001': { title: 'T-001: Spéc de Portée', goal: 'Définir la portée de la fonctionnalité (scope_in, scope_out) et analyser les dépendances.', verification: 'Faire correspondre le README aux objectifs, sans espaces réservés.', dependencies: 'Aucune (Tâche initiale)', governance: 'Aucune violation', nodeTitle: 'Spéc Portée' },
+        'T-002': { title: 'T-002: Routes d\'Auth', goal: 'Implémenter le hachage des mots de passe (bcrypt) et l\'émission de JWT dans routes/auth.js.', verification: 'Tests unitaires de routes/auth.js, vérifications de l\'intégration API.', dependencies: 'Limité par l\'achèvement de T-001', governance: 'Aucune violation', nodeTitle: 'Routes Auth' },
+        'T-003': { title: 'T-003: UI Login', goal: 'Créer le formulaire Login.js, connecter la gestion de l\'état d\'authentification.', verification: 'Scénarios Cypress e2e pour la saisie, la soumission et la redirection.', dependencies: 'Bloqué par l\'achèvement de T-002', governance: 'Aucune violation', nodeTitle: 'UI Login' },
+        'T-004': { title: 'T-004: Sync Wiki', goal: 'Documenter l\'architecture de session JWT et variables d\'environnement dans docs/auth-architecture.md.', verification: 'Vérifier la validation des liens, s\'assurer du contenu à jour.', dependencies: 'Bloqué par l\'achèvement de T-003', governance: 'Aucune violation', nodeTitle: 'Sync Wiki' }
+      },
+      de: {
+        'T-001': { title: 'T-001: Umfangsspez.', goal: 'Umfang definieren (scope_in, scope_out) und Abhängigkeiten analysieren.', verification: 'README mit Projektzielen abgleichen, keine Platzhalter.', dependencies: 'Keine (Startaufgabe)', governance: 'Keine Verstöße', nodeTitle: 'Umfangsspez.' },
+        'T-002': { title: 'T-002: Auth-Routen', goal: 'Passwort-Hashing (bcrypt) und JWT-Ausstellung in routes/auth.js implementieren.', verification: 'Unit-Tests von routes/auth.js, API-Integrationsprüfungen.', dependencies: 'Begrenzt durch Abschluss von T-001', governance: 'Keine Verstöße', nodeTitle: 'Auth-Routen' },
+        'T-003': { title: 'T-003: Login UI', goal: 'Login.js-Formular erstellen, Authentifizierungs-Zustandsverwaltung anbinden.', verification: 'Cypress e2e-Szenarien für Eingabe, Absenden und Weiterleitung.', dependencies: 'Blockiert durch Abschluss von T-002', governance: 'Keine Verstöße', nodeTitle: 'Login UI' },
+        'T-004': { title: 'T-004: Wiki Sync', goal: 'JWT-Sitzungsarchitektur und Umgebungsvariablen in docs/auth-architecture.md dokumentieren.', verification: 'Link-Validierung prüfen, Inhalt auf Aktualität prüfen.', dependencies: 'Blockiert durch Abschluss von T-003', governance: 'Keine Verstöße', nodeTitle: 'Wiki Sync' }
+      },
+      zh: {
+        'T-001': { title: 'T-001: 需求范围规范', goal: '制定开发范围 (scope_in, scope_out) 并分析依赖关系。', verification: '检查 README 文件的目标一致性，检查无 TBD 占位符。', dependencies: '无依赖 (首要任务)', governance: '无合规问题', nodeTitle: '需求范围' },
+        'T-002': { title: 'T-002: 编写 Auth 路由', goal: '在 routes/auth.js 中实现密码哈希加密 (bcrypt) 与 JWT 令牌分发。', verification: 'routes/auth.js 单元测试，API 接口集成测试。', dependencies: '受限于 T-001 的完成情况', governance: '无合规问题', nodeTitle: 'Auth 路由' },
+        'T-003': { title: 'T-003: 登录页面前端开发', goal: '开发 React 登录表单 Login.js，对接接口及本地登录状态维护。', verification: '编写 Cypress 自动化 e2e 测试校验输入、提交及重定向。', dependencies: '受限于 T-002 的完成情况', governance: '无合规问题', nodeTitle: '登录 UI' },
+        'T-004': { title: 'T-004: 维基文档同步', goal: '在 docs/auth-architecture.md 中写入 JWT 会话生命周期及环境变量文档。', verification: '使用 link-checker 工具校验文档链接并检查时效性。', dependencies: '受限于 T-003 的完成情况', governance: '无合规问题', nodeTitle: '维基同步' }
+      },
+      ja: {
+        'T-001': { title: 'T-001: スコープ仕様策定', goal: '機能要件スコープ (scope_in, scope_out) の策定および依存関係分析。', verification: 'READMEとプロジェクト目標の整合確認、プレースホルダーなきこと。', dependencies: 'なし (初期タスク)', governance: '規約違反なし', nodeTitle: 'スコープ仕様' },
+        'T-002': { title: 'T-002: 認証ルーティング作成', goal: 'routes/auth.js でのパスワードハッシュ化 (bcrypt) および JWT 発行処理の実装。', verification: 'routes/auth.js の単体テストおよびAPI結合テスト。', dependencies: 'T-001 の完了が前提条件', governance: '規約違反なし', nodeTitle: '認証ルート' },
+        'T-003': { title: 'T-003: ログインフォーム開発', goal: 'Reactログインフォーム Login.js の構築および認証状態管理のフック接続。', verification: 'フォーム入力、送信、およびマイページ遷移 of Cypress E2E テスト。', dependencies: 'T-002 の完了が前提条件', governance: '規約違反なし', nodeTitle: 'ログイン UI' },
+        'T-004': { title: 'T-004: Wiki同期管理', goal: 'docs/auth-architecture.md への JWT セッション設計および環境変数の仕様ドキュメント追記。', verification: 'リンクチェッカーツールの動作確認、記載内容の最新化検証。', dependencies: 'T-003 の完了が前提条件', governance: '規約違反なし', nodeTitle: 'Wiki 同期' }
+      }
+    };
+
+    const TASKS = {
+      'T-001': { title: '', goal: '', verification: '', dependencies: '', governance: '', owner: 'planner', status: 'ready', sequence: ['planner', 'worker', 'reviewer', 'tester', 'docs'] },
+      'T-002': { title: '', goal: '', verification: '', dependencies: '', governance: '', owner: 'worker', status: 'draft', sequence: ['planner', 'worker', 'reviewer', 'tester', 'docs'] },
+      'T-003': { title: '', goal: '', verification: '', dependencies: '', governance: '', owner: 'worker', status: 'draft', sequence: ['planner', 'worker', 'reviewer', 'tester', 'docs'] },
+      'T-004': { title: '', goal: '', verification: '', dependencies: '', governance: '', owner: 'docs', status: 'draft', sequence: ['planner', 'worker', 'reviewer', 'tester', 'docs'] }
+    };
+
+    // --- BASE MULTILINGUAL SIMULATION STEPS ---
+    const SIMULATION_STEPS_BASE = [
+      // Task 1
+      { taskId: 'T-001', role: 'planner', status: 'ready', prep: 100, sound: 'sweep',
+        log: {
+          en: '[PLANNER] Initializing requirements for Auth-V2. gate: FEATURE-PREPARATION.md passed.',
+          ru: '[PLANNER] Инициализация требований Auth-V2. gate: FEATURE-PREPARATION.md пройдено.',
+          es: '[PLANNER] Inicializando requisitos para Auth-V2. Puerta: FEATURE-PREPARATION.md aprobada.',
+          fr: '[PLANNER] Initialisation des exigences pour Auth-V2. Passerelle : FEATURE-PREPARATION.md franchie.',
+          de: '[PLANNER] Anforderungen für Auth-V2 initialisieren. Gate: FEATURE-PREPARATION.md bestanden.',
+          zh: '[PLANNER] 初始化 Auth-V2 需求。门槛检查：FEATURE-PREPARATION.md 已通过。',
+          ja: '[PLANNER] Auth-V2 の要件を初期化しています。ゲート: FEATURE-PREPARATION.md を通過しました。'
+        },
+        bubble: {
+          en: 'Drawing scope boundaries. Checking dependencies.',
+          ru: 'Черчу рамки скоупа. Проверяю зависимости.',
+          es: 'Dibujando límites de alcance. Comprobando dependencias.',
+          fr: 'Définition des limites de la portée. Vérification des dépendances.',
+          de: 'Grenzen des Leistungsumfangs zeichnen. Abhängigkeiten prüfen.',
+          zh: '划分需求边界。检查依赖关系。',
+          ja: 'スコープの境界線を描き、依存関係を確認しています。'
+        },
+        chat: {
+          en: 'Locked specs in FEATURE-PREPARATION.md. Starting breakdown.',
+          ru: 'Зафиксировал ТЗ в FEATURE-PREPARATION.md. Начинаю разбивку.',
+          es: 'Especificaciones fijadas en FEATURE-PREPARATION.md. Iniciando desglose.',
+          fr: 'Spécifications verrouillées dans FEATURE-PREPARATION.md. Lancement de la répartition.',
+          de: 'Spezifikationen in FEATURE-PREPARATION.md festgelegt. Beginn der Aufteilung.',
+          zh: '在 FEATURE-PREPARATION.md 中锁定规格。开始拆分任务。',
+          ja: 'FEATURE-PREPARATION.md で仕様を確定。タスクの分割を開始します。'
+        }
+      },
+      { taskId: 'T-001', role: 'worker', status: 'in_progress', prep: 100, sound: 'type',
+        log: {
+          en: '[WORKER] Created TASK-PLAN.md. Added metadata to Feature Layer.',
+          ru: '[WORKER] Создан файл TASK-PLAN.md. Добавлены метаданные в Feature Layer.',
+          es: '[WORKER] Creado archivo TASK-PLAN.md. Añadido metadatos a la Capa de Características.',
+          fr: '[WORKER] Fichier TASK-PLAN.md créé. Métadonnées ajoutées à la couche de fonctionnalités.',
+          de: '[WORKER] TASK-PLAN.md erstellt. Metadaten zum Feature Layer hinzugefügt.',
+          zh: '[WORKER] 创建了 TASK-PLAN.md。在功能层中添加了元数据。',
+          ja: '[WORKER] TASK-PLAN.md ファイルを作成しました。機能レイヤーにメタデータを追加しました。'
+        },
+        bubble: {
+          en: 'Loading plan templates, fixing goals.',
+          ru: 'Загружаю шаблоны планов, фиксирую цели.',
+          es: 'Cargando plantillas de plan, fijando metas.',
+          fr: 'Chargement des modèles de plan, définition des objectifs.',
+          de: 'Plan-Vorlagen laden, Ziele festlegen.',
+          zh: '加载计划模板，确定开发目标。',
+          ja: '計画テンプレートを読み込み、目標を定めています。'
+        },
+        chat: {
+          en: 'Task plan registry formed in the repository.',
+          ru: 'Реестр таскплана сформирован в репозитории.',
+          es: 'Registro de plan de tareas formado en el repositorio.',
+          fr: 'Registre du plan de tâches formé dans le dépôt.',
+          de: 'Task-Plan-Register im Repository erstellt.',
+          zh: '在仓库中生成了任务计划注册表。',
+          ja: 'リポジトリにタスク計画レジストリが形成されました。'
+        }
+      },
+      { taskId: 'T-001', role: 'reviewer', status: 'needs_review', prep: 100, sound: 'sweep',
+        log: {
+          en: '[REVIEWER] Checking task plan structure. No TBD found.',
+          ru: '[REVIEWER] Проверка структуры таскплана. TBD не обнаружено.',
+          es: '[REVIEWER] Comprobando estructura del plan de tareas. No se encontraron TBD.',
+          fr: '[REVIEWER] Vérification de la structure du plan de tâches. Aucun TBD trouvé.',
+          de: '[REVIEWER] Task-Plan-Struktur prüfen. Keine TBDs gefunden.',
+          zh: '[REVIEWER] 检查任务计划结构。未发现 TBD 待办事项。',
+          ja: '[REVIEWER] タスク計画の構造を検証しています。TBD は見つかりませんでした。'
+        },
+        bubble: {
+          en: 'Scanning TASK-PLAN.md for compliance.',
+          ru: 'Сканирую TASK-PLAN.md на комплаенс.',
+          es: 'Escaneando TASK-PLAN.md para verificar cumplimiento.',
+          fr: 'Analyse de TASK-PLAN.md pour la conformité.',
+          de: 'TASK-PLAN.md auf Konformität scannen.',
+          zh: '扫描 TASK-PLAN.md 以进行合规性检查。',
+          ja: 'TASK-PLAN.md のコンプライアンスをスキャンしています。'
+        },
+        chat: {
+          en: 'No errors found in the plans. Approved.',
+          ru: 'Ошибок в планах не найдено. Апрув.',
+          es: 'No se encontraron errores en los planes. Aprobado.',
+          fr: 'Aucune erreur trouvée dans les plans. Approuvé.',
+          de: 'Keine Fehler in den Plänen gefunden. Genehmigt.',
+          zh: '计划中未发现错误。通过审批。',
+          ja: '計画にエラーは見つかりませんでした。承認します。'
+        }
+      },
+      { taskId: 'T-001', role: 'tester', status: 'approved', prep: 100, sound: 'bubble',
+        log: {
+          en: '[TESTER] Command: node validate-plan.js. Parser errors: 0.',
+          ru: '[TESTER] Команда: node validate-plan.js. Ошибок парсера: 0.',
+          es: '[TESTER] Comando: node validate-plan.js. Errores del analizador: 0.',
+          fr: '[TESTER] Commande : node validate-plan.js. Erreurs d\'analyse : 0.',
+          de: '[TESTER] Befehl: node validate-plan.js. Parser-Fehler: 0.',
+          zh: '[TESTER] 命令：node validate-plan.js。语法校验错误数：0。',
+          ja: '[TESTER] コマンド: node validate-plan.js。パーサーエラー: 0。'
+        },
+        bubble: {
+          en: 'Running Markdown structure validator.',
+          ru: 'Запускаю валидатор Markdown-структуры.',
+          es: 'Ejecutando validador de estructura Markdown.',
+          fr: 'Exécution du validateur de structure Markdown.',
+          de: 'Markdown-Struktur-Validator ausführen.',
+          zh: '运行 Markdown 结构校验器。',
+          ja: 'Markdown構造バリデータプログラムを実行しています。'
+        },
+        chat: {
+          en: 'Validator returned exit code 0.',
+          ru: 'Валидатор вернул код 0.',
+          es: 'El validador devolvió código de salida 0.',
+          fr: 'Le validateur a renvoyé le code de sortie 0.',
+          de: 'Validator gab Exit-Code 0 zurück.',
+          zh: '验证器返回退出代码 0。',
+          ja: 'バリデータは終了コード0を返しました。'
+        }
+      },
+      { taskId: 'T-001', role: 'docs', status: 'done', prep: 100, sound: 'success',
+        log: {
+          en: '[DOCS_SYNC] Task T-001 closed. Wiki index updated.',
+          ru: '[DOCS_SYNC] Задача T-001 закрыта. Wiki-индекс обновлен.',
+          es: '[DOCS_SYNC] Tarea T-001 cerrada. Índice Wiki actualizado.',
+          fr: '[DOCS_SYNC] Tâche T-001 fermée. Index du Wiki mis à jour.',
+          de: '[DOCS_SYNC] Aufgabe T-001 geschlossen. Wiki-Index aktualisiert.',
+          zh: '[DOCS_SYNC] 任务 T-001 已关闭。维基索引已更新。',
+          ja: '[DOCS_SYNC] タスク T-001 がクローズされました。Wiki インデックスが更新されました。'
+        },
+        bubble: {
+          en: 'Writing task metadata to the global index.',
+          ru: 'Записываю метаданные таски в глобальный индекс.',
+          es: 'Escribiendo metadatos de la tarea en el índice global.',
+          fr: 'Écriture des métadonnées de la tâche dans l\'index global.',
+          de: 'Task-Metadaten in den globalen Index schreiben.',
+          zh: '将任务元数据写入全局索引文件。',
+          ja: 'タスクのメタデータをグローバルインデックスに書き込んでいます。'
+        },
+        chat: {
+          en: 'T-001 fully closed! Feature progress: 25%.',
+          ru: 'T-001 полностью закрыта! Прогресс фичи: 25%.',
+          es: '¡T-001 completamente cerrada! Progreso: 25%.',
+          fr: 'T-001 entièrement fermée ! Progression : 25%.',
+          de: 'T-001 vollständig geschlossen! Feature-Fortschritt: 25%.',
+          zh: 'T-001 已完全关闭！功能开发进度：25%。',
+          ja: 'T-001 が完全にクローズされました！機能の進捗率: 25% です。'
+        }
+      },
+      // Task 2
+      { taskId: 'T-002', role: 'planner', status: 'ready', prep: 100, sound: 'sweep',
+        log: {
+          en: '[PLANNER] Task T-002 set to Ready. Test strategy defined.',
+          ru: '[PLANNER] Задача T-002 переведена в Ready. Задана стратегия тестов.',
+          es: '[PLANNER] Tarea T-002 establecida como Lista. Estrategia de prueba definida.',
+          fr: '[PLANNER] Tâche T-002 définie sur Prête. Stratégie de test définie.',
+          de: '[PLANNER] Aufgabe T-002 auf Bereit gesetzt. Teststrategie definiert.',
+          zh: '[PLANNER] 任务 T-002 已就绪。已确定测试策略。',
+          ja: '[PLANNER] タスク T-002 が準備完了に設定されました。テスト戦略が定義されました。'
+        },
+        bubble: {
+          en: 'Checking scope_in for T-002. Preparing test plan.',
+          ru: 'Проверяю scope_in для T-002. Готовлю тест-план.',
+          es: 'Comprobando scope_in para T-002. Preparando plan de pruebas.',
+          fr: 'Vérification de scope_in pour T-002. Préparation du plan de test.',
+          de: 'Scope_in für T-002 prüfen. Testplan vorbereiten.',
+          zh: '检查 T-002 的开发范围。准备编写测试计划。',
+          ja: 'T-002 のスコープを確認しています。テスト計画を準備中です。'
+        },
+        chat: {
+          en: 'Worker, route POST /api/auth/register is ready for development.',
+          ru: 'Worker, роут POST /api/auth/register готов к разработке.',
+          es: 'Worker, ruta POST /api/auth/register lista para desarrollo.',
+          fr: 'Worker, la route POST /api/auth/register est prête pour le développement.',
+          de: 'Worker, Route POST /api/auth/register ist bereit für die Entwicklung.',
+          zh: 'Worker 角色注意，路由接口 POST /api/auth/register 已可以开始开发。',
+          ja: 'Workerさん、ルート POST /api/auth/register の開発準備が整いました。'
+        }
+      },
+      { taskId: 'T-002', role: 'worker', status: 'in_progress', prep: 100, sound: 'type',
+        log: {
+          en: '[WORKER] Modifying routes/auth.js, bcrypt.js hash added.',
+          ru: '[WORKER] Модификация routes/auth.js, добавлен bcrypt.js хэш.',
+          es: '[WORKER] Modificando routes/auth.js, añadido hash bcrypt.js.',
+          fr: '[WORKER] Modification de routes/auth.js, hachage bcrypt.js ajouté.',
+          de: '[WORKER] Modifikation von routes/auth.js, bcrypt.js-Hash hinzugefügt.',
+          zh: '[WORKER] 修改 routes/auth.js，引入 bcrypt.js 进行哈希加密。',
+          ja: '[WORKER] routes/auth.js ファイルを修正し、bcrypt.js ハッシュ処理を追加しました。'
+        },
+        bubble: {
+          en: 'Writing JWT authorization logic and encryption.',
+          ru: 'Пишу логику JWT авторизации и шифрование.',
+          es: 'Escribiendo lógica de autorización JWT y encriptación.',
+          fr: 'Écriture de la logique d\'autorisation JWT et du chiffrement.',
+          de: 'JWT-Autorisierungslogik und Verschlüsselung schreiben.',
+          zh: '编写 JWT 授权逻辑和加密算法。',
+          ja: 'JWT 認証ロジックと暗号化処理を記述しています。'
+        },
+        chat: {
+          en: 'Auth routes written, unit tests ready.',
+          ru: 'Роуты авторизации написаны, unit-тесты готовы.',
+          es: 'Rutas de autenticación escritas, pruebas unitarias listas.',
+          fr: 'Routes d\'authentification écrites, tests unitaires prêts.',
+          de: 'Auth-Routen geschrieben, Unit-Tests bereit.',
+          zh: '授权路由已编写，单元测试就绪。',
+          ja: '認証ルートの記述完了。単体テストの準備ができました。'
+        }
+      },
+      { taskId: 'T-002', role: 'reviewer', status: 'needs_review', prep: 100, sound: 'sweep',
+        log: {
+          en: '[REVIEWER] Git diff verified. Secret keys hidden in env.',
+          ru: '[REVIEWER] Git diff проверен. Секретные ключи скрыты в env.',
+          es: '[REVIEWER] Git diff verificado. Claves secretas ocultas en env.',
+          fr: '[REVIEWER] Git diff vérifié. Clés secrètes masquées dans env.',
+          de: '[REVIEWER] Git-Diff verifiziert. Geheimschlüssel in env versteckt.',
+          zh: '[REVIEWER] Git diff 已校验。敏感私钥已隐藏于环境配置文件。',
+          ja: '[REVIEWER] Git差分を確認しました。シークレットキーは.envに安全に退避されています。'
+        },
+        bubble: {
+          en: 'Conducting security audit for tokens.',
+          ru: 'Провожу аудит безопасности токенов.',
+          es: 'Realizando auditoría de seguridad para tokens.',
+          fr: 'Audit de sécurité pour les jetons.',
+          de: 'Sicherheitsaudit für Token durchführen.',
+          zh: '对身份令牌进行安全审核。',
+          ja: 'トークンのセキュリティ監査を実施しています。'
+        },
+        chat: {
+          en: 'Secrets have not leaked. Code review passed.',
+          ru: 'Секреты не утекли. Код-ревью пройдено.',
+          es: 'Los secretos no se han filtrado. Revisión de código aprobada.',
+          fr: 'Les secrets n\'ont pas fuité. Revue de code réussie.',
+          de: 'Geheimnisse sind nicht geleakt. Code-Review bestanden.',
+          zh: '无敏感信息泄露。代码评审通过。',
+          ja: 'シークレットの流出なし。コードレビュー承認します。'
+        }
+      },
+      { taskId: 'T-002', role: 'tester', status: 'approved', prep: 100, sound: 'bubble',
+        log: {
+          en: '[TESTER] Command: npm run test:auth\n[TESTER] 4/4 tests passed successfully.',
+          ru: '[TESTER] Команда: npm run test:auth\n[TESTER] 4/4 тестов пройдены успешно.',
+          es: '[TESTER] Comando: npm run test:auth\n[TESTER] 4/4 pruebas aprobadas con éxito.',
+          fr: '[TESTER] Commande : npm run test:auth\n[TESTER] 4/4 tests réussis avec succès.',
+          de: '[TESTER] Befehl: npm run test:auth\n[TESTER] 4/4 Tests erfolgreich bestanden.',
+          zh: '[TESTER] 命令：npm run test:auth\n[TESTER] 4/4 个测试用例全部通过。',
+          ja: '[TESTER] コマンド: npm run test:auth\n[TESTER] 4/4件のテストが正常に通過しました。'
+        },
+        bubble: {
+          en: 'Running integration tests for auth routes.',
+          ru: 'Запускаю прогон тестов интеграции роутов.',
+          es: 'Ejecutando pruebas de integración para rutas de auth.',
+          fr: 'Exécution des tests d\'intégration pour les routes d\'authentification.',
+          de: 'Integrationstests für Auth-Routen ausführen.',
+          zh: '对授权路由接口运行集成测试。',
+          ja: '認証ルートの結合テストを実行しています。'
+        },
+        chat: {
+          en: 'Tests passed without failures. Green zone.',
+          ru: 'Тесты прошли без сбоев. Зеленая зона.',
+          es: 'Pruebas aprobadas sin fallos. Zona verde.',
+          fr: 'Tests réussis sans échec. Zone verte.',
+          de: 'Tests ohne Fehler bestanden. Grüne Zone.',
+          zh: '测试无任何故障，系统处于健康绿色指标状态。',
+          ja: 'テストはノーエラーで通過。グリーンゾーンです。'
+        }
+      },
+      { taskId: 'T-002', role: 'docs', status: 'done', prep: 100, sound: 'success',
+        log: {
+          en: '[DOCS_SYNC] Document routes/auth.js linked to artifacts.',
+          ru: '[DOCS_SYNC] Документ routes/auth.js привязан к артефактам.',
+          es: '[DOCS_SYNC] Documento routes/auth.js vinculado a artefactos.',
+          fr: '[DOCS_SYNC] Document routes/auth.js lié aux artefacts.',
+          de: '[DOCS_SYNC] Dokument routes/auth.js mit Artefakten verknüpft.',
+          zh: '[DOCS_SYNC] 文件 routes/auth.js 已关联至交付物归档目录。',
+          ja: '[DOCS_SYNC] routes/auth.js ドキュメントが成果物ファイルに紐付けられました。'
+        },
+        bubble: {
+          en: 'Generating commits report for T-002.',
+          ru: 'Формирую отчет по коммитам T-002.',
+          es: 'Generando informe de commits para T-002.',
+          fr: 'Génération du rapport de commits pour T-002.',
+          de: 'Commit-Bericht für T-002 erstellen.',
+          zh: '正在生成 T-002 的代码提交审计报告。',
+          ja: 'T-002 のコミット履歴レポートを生成しています。'
+        },
+        chat: {
+          en: 'T-002 set to DONE. Project readiness: 50%.',
+          ru: 'T-002 переведена в DONE. Готовность проекта: 50%.',
+          es: 'T-002 establecida como Hecho. Listo: 50%.',
+          fr: 'T-002 définie sur Terminée. Avancement : 50%.',
+          de: 'T-002 auf ERLEDIGT gesetzt. Projektbereitschaft: 50%.',
+          zh: 'T-002 已归档为已完成状态。项目总体就绪度：50%。',
+          ja: 'T-002 を完了に設定。プロジェクト進捗率: 50% です。'
+        }
+      },
+      // Task 3
+      { taskId: 'T-003', role: 'planner', status: 'ready', prep: 100, sound: 'sweep',
+        log: {
+          en: '[PLANNER] Configuring UI Cypress e2e tests.',
+          ru: '[PLANNER] Настройка e2e тестов Cypress для UI.',
+          es: '[PLANNER] Configurando pruebas e2e de Cypress para UI.',
+          fr: '[PLANNER] Configuration des tests e2e Cypress pour l\'interface.',
+          de: '[PLANNER] Cypress E2E-Tests für UI konfigurieren.',
+          zh: '[PLANNER] 配置前端界面的 Cypress 端到端 (e2e) 自动化测试用例。',
+          ja: '[PLANNER] UI の Cypress E2E テスト環境を整備しています。'
+        },
+        bubble: {
+          en: 'Planning e2e auth scenarios.',
+          ru: 'Планирую e2e-сценарии авторизации.',
+          es: 'Planificando escenarios e2e de autenticación.',
+          fr: 'Planification des scénarios e2e d\'authentification.',
+          de: 'E2E-Authentifizierungsszenarien planen.',
+          zh: '设计登录流程端到端模拟测试场景。',
+          ja: '認証フローのE2Eテストシナリオを設計しています。'
+        },
+        chat: {
+          en: 'Frontend login form awaits implementation.',
+          ru: 'Фронтенд формы входа ждет имплементации.',
+          es: 'El formulario de login frontend espera implementación.',
+          fr: 'Le formulaire de connexion frontend attend son implémentation.',
+          de: 'Frontend-Anmeldeformular wartet auf Implementierung.',
+          zh: '前端登录表单待开发。',
+          ja: 'フロントエンドのログイン画面実装を待機しています。'
+        }
+      },
+      { taskId: 'T-003', role: 'worker', status: 'in_progress', prep: 100, sound: 'type',
+        log: {
+          en: '[WORKER] Created Login.js form, useState hooks connected.',
+          ru: '[WORKER] Создана форма Login.js, хуки useState подключены.',
+          es: '[WORKER] Creado formulario Login.js, hooks useState conectados.',
+          fr: '[WORKER] Formulaire Login.js créé, hooks useState connectés.',
+          de: '[WORKER] Login.js-Formular erstellt, useState-Hooks verbunden.',
+          zh: '[WORKER] 编写 Login.js 组件表单，绑定 useState 进行状态管理。',
+          ja: '[WORKER] Login.js 画面を作成し、Reactの useState フックを接続しました。'
+        },
+        bubble: {
+          en: 'Building React login form, connecting to API.',
+          ru: 'Верстаю форму логина на React, подключаю к API.',
+          es: 'Construyendo formulario de login en React, conectando a la API.',
+          fr: 'Création du formulaire de connexion React, connexion à l\'API.',
+          de: 'React-Anmeldeformular erstellen, Verbindung zur API herstellen.',
+          zh: '使用 React 开发登录界面，连接至后端 API 接口。',
+          ja: 'Reactログインフォームを構築し、APIに接続しています。'
+        },
+        chat: {
+          en: 'UI completed and connected to auth API.',
+          ru: 'UI готов и подключен к авторизации.',
+          es: 'UI completada y conectada a la API de autenticación.',
+          fr: 'Interface utilisateur terminée et connectée à l\'API d\'authentification.',
+          de: 'UI fertiggestellt und mit der Auth-API verbunden.',
+          zh: '界面开发完毕，已与验证接口联调。',
+          ja: '画面のマークアップ完了。認証APIとの連動OK。'
+        }
+      },
+      { taskId: 'T-003', role: 'reviewer', status: 'needs_review', prep: 100, sound: 'beep',
+        log: {
+          en: '[REVIEWER] Warning: login button has no type="submit".\n[REVIEWER] Warning: missing accessibility aria-labels.',
+          ru: '[REVIEWER] Ошибка: кнопка входа не имеет type="submit".\n[REVIEWER] Ошибка: отсутствуют accessibility aria-labels.',
+          es: '[REVIEWER] Advertencia: el botón de login no tiene type="submit".\n[REVIEWER] Advertencia: faltan etiquetas de accesibilidad aria-labels.',
+          fr: '[REVIEWER] Avertissement : le bouton de connexion n\'a pas de type="submit".\n[REVIEWER] Avertissement : attributs d\'accessibilité aria-labels manquants.',
+          de: '[REVIEWER] Warnung: Login-Button hat kein type="submit".\n[REVIEWER] Warnung: Fehlende Barrierefreiheit aria-labels.',
+          zh: '[REVIEWER] 警告：登录提交按钮缺少 type="submit" 属性。\n[REVIEWER] 警告：表单缺少提升无障碍体验的 aria-labels 标签。',
+          ja: '[REVIEWER] 警告: ログインボタンに type="submit" が指定されていません。\n[REVIEWER] 警告: アクセシビリティ用の aria-labels が不足しています。'
+        },
+        bubble: {
+          en: 'Inspecting markup accessibility and bugs.',
+          ru: 'Проверяю верстку на доступность и баги.',
+          es: 'Inspeccionando accesibilidad del marcado y errores.',
+          fr: 'Inspection de l\'accessibilité du balisage et recherche de bogues.',
+          de: 'Markup-Barrierefreiheit und Fehler untersuchen.',
+          zh: '审查 HTML 语义结构和代码缺陷。',
+          ja: 'アクセシビリティ対応状況とバグがないか検証しています。'
+        },
+        chat: {
+          en: 'Found issues in layout. Rejecting for corrections.',
+          ru: 'Нашел ошибки в верстке. Отклоняю на доработку.',
+          es: 'Se encontraron problemas en el diseño. Rechazando para correcciones.',
+          fr: 'Problèmes trouvés dans la mise en page. Rejet pour corrections.',
+          de: 'Probleme im Layout gefunden. Zur Korrektur zurückgewiesen.',
+          zh: '代码存在缺陷。打回进行修正。',
+          ja: 'レイアウトに課題を発見しました。修正を要求します。'
+        }
+      },
+      { taskId: 'T-003', role: 'worker', status: 'in_progress', prep: 100, sound: 'type',
+        log: {
+          en: '[WORKER] Updated components/Login.js: aria-labels added.',
+          ru: '[WORKER] Обновлен файл components/Login.js: aria-labels добавлены.',
+          es: '[WORKER] Actualizado components/Login.js: añadidas etiquetas aria-labels.',
+          fr: '[WORKER] Fichier components/Login.js mis à jour : aria-labels ajoutés.',
+          de: '[WORKER] components/Login.js aktualisiert: aria-labels hinzugefügt.',
+          zh: '[WORKER] 修改组件 components/Login.js：补全了无障碍描述属性。',
+          ja: '[WORKER] components/Login.js ファイルを更新し、aria-labels を追加しました。'
+        },
+        bubble: {
+          en: 'Fixing markup semantics, adding aria labels.',
+          ru: 'Исправляю семантику верстки, добавляю aria.',
+          es: 'Corrigiendo semántica del marcado, añadiendo etiquetas aria.',
+          fr: 'Correction de la sémantique du balisage, ajout d\'attributs aria.',
+          de: 'Markup-Semantik korrigieren, Aria-Labels hinzufügen.',
+          zh: '重构界面语义布局，补齐 aria 无障碍说明。',
+          ja: 'セマンティクスマークアップの修正と、aria 属性の追加を行っています。'
+        },
+        chat: {
+          en: 'All UI issues resolved. Resubmitting.',
+          ru: 'Все недочеты по UI устранены. Отправляю повторно.',
+          es: 'Todos los problemas de UI resueltos. Volviendo a enviar.',
+          fr: 'Tous les problèmes d\'interface résolus. Nouvelle soumission.',
+          de: 'Alle UI-Probleme gelöst. Erneut einreichen.',
+          zh: '所有的界面缺陷均已修复。重新提交评审。',
+          ja: 'UI面の課題はすべて解消しました。再提出します。'
+        }
+      },
+      { taskId: 'T-003', role: 'reviewer', status: 'needs_review', prep: 100, sound: 'sweep',
+        log: {
+          en: '[REVIEWER] Recheck Login.js: OK. Compliance checks passed.',
+          ru: '[REVIEWER] Повторная проверка Login.js: ОК. Комплаенс пройден.',
+          es: '[REVIEWER] Volviendo a comprobar Login.js: OK. Comprobaciones de cumplimiento aprobadas.',
+          fr: '[REVIEWER] Nouvelle vérification de Login.js : OK. Contrôles de conformité réussis.',
+          de: '[REVIEWER] Login.js erneut prüfen: OK. Compliance-Prüfungen bestanden.',
+          zh: '[REVIEWER] 重新审查 Login.js：通过。合规性检测完成。',
+          ja: '[REVIEWER] Login.js の再レビュー: 合格。規約適合確認が完了しました。'
+        },
+        bubble: {
+          en: 'Re-scanning commits... Everything is fine.',
+          ru: 'Сканирую коммиты повторно... Все ок.',
+          es: 'Volviendo a escanear commits... Todo bien.',
+          fr: 'Nouvelle analyse des commits... Tout est en ordre.',
+          de: 'Commits erneut scannen... Alles in Ordnung.',
+          zh: '重新梳理提交细节。未发现异常。',
+          ja: 'コミット差分を再スキャンしています... 全て良好です。'
+        },
+        chat: {
+          en: 'Markup is clean now. Passing to tester.',
+          ru: 'Теперь верстка чистая. Передаю тестеру.',
+          es: 'El marcado está limpio ahora. Pasando al probador.',
+          fr: 'Le balisage est propre maintenant. Transmission au testeur.',
+          de: 'Markup ist jetzt sauber. An Tester übergeben.',
+          zh: '代码结构非常规范。转接至测试员。',
+          ja: 'ソースコードはきれいになりました。テスターに回します。'
+        }
+      },
+      { taskId: 'T-003', role: 'tester', status: 'approved', prep: 100, sound: 'bubble',
+        log: {
+          en: '[TESTER] Command: npx cypress run --spec login.cy.js\n[TESTER] All e2e clicks successful. Redirect to dashboard verified.',
+          ru: '[TESTER] Команда: npx cypress run --spec login.cy.js\n[TESTER] Все e2e клики успешны. Редирект в кабинет прошел.',
+          es: '[TESTER] Comando: npx cypress run --spec login.cy.js\n[TESTER] Todos los clics e2e exitosos. Redirección al panel verificada.',
+          fr: '[TESTER] Commande : npx cypress run --spec login.cy.js\n[TESTER] Tous les clics e2e réussis. Redirection vers le tableau de bord vérifiée.',
+          de: '[TESTER] Befehl: npx cypress run --spec login.cy.js\n[TESTER] Alle E2E-Klicks erfolgreich. Weiterleitung zum Dashboard verifiziert.',
+          zh: '[TESTER] 命令：npx cypress run --spec login.cy.js\n[TESTER] 流程点击通畅。后台看板重定向验证成功。',
+          ja: '[TESTER] コマンド: npx cypress run --spec login.cy.js\n[TESTER] E2Eクリックの動作検証成功。マイページ遷移も確認完了。'
+        },
+        bubble: {
+          en: 'Launching Cypress E2E simulation.',
+          ru: 'Запускаю E2E симуляцию Cypress.',
+          es: 'Lanzando simulación Cypress E2E.',
+          fr: 'Lancement de la simulation e2e Cypress.',
+          de: 'Cypress E2E-Simulation starten.',
+          zh: '启动 Cypress 自动化测试框架模拟人机交互。',
+          ja: 'Cypress を用いた自動E2Eシナリオを回しています。'
+        },
+        chat: {
+          en: 'Client-side e2e tests passed.',
+          ru: 'Клиентские автотесты прошли без сбоев.',
+          es: 'Pruebas e2e del lado del cliente aprobadas.',
+          fr: 'Tests e2e côté client réussis.',
+          de: 'Clientseitige E2E-Tests bestanden.',
+          zh: '用户端交互测试用例顺利通过。',
+          ja: 'フロントエンド側のE2Eテスト合格。'
+        }
+      },
+      { taskId: 'T-003', role: 'docs', status: 'done', prep: 100, sound: 'success',
+        log: {
+          en: '[DOCS_SYNC] UI component screenshots saved in artifacts.',
+          ru: '[DOCS_SYNC] Скриншоты UI-компонента сохранены в артефакты.',
+          es: '[DOCS_SYNC] Capturas de pantalla del componente UI guardadas en artefactos.',
+          fr: '[DOCS_SYNC] Captures d\'écran du composant d\'interface enregistrées dans les artefacts.',
+          de: '[DOCS_SYNC] UI-Komponenten-Screenshots in Artefakten gespeichert.',
+          zh: '[DOCS_SYNC] 界面组件快照截图已成功存入制品归档。',
+          ja: '[DOCS_SYNC] UIパーツのスクリーンショットが成果物フォルダに保存されました。'
+        },
+        bubble: {
+          en: 'Updating UI feature guide in documents.',
+          ru: 'Обновляю UI-гайд фичи в документах.',
+          es: 'Actualizando guía de características UI en documentos.',
+          fr: 'Mise à jour du guide des fonctionnalités de l\'interface dans les documents.',
+          de: 'UI-Feature-Leitfaden in Dokumenten aktualisieren.',
+          zh: '在技术档案中补充组件的使用说明。',
+          ja: 'ドキュメント群の UI デザインガイドラインを改訂しています。'
+        },
+        chat: {
+          en: 'T-003 successfully closed. Progress: 75%!',
+          ru: 'T-003 успешно закрыта. Прогресс: 75%!',
+          es: 'T-003 cerrada con éxito. ¡Progreso: 75%!',
+          fr: 'T-003 fermée avec succès. Progression : 75% !',
+          de: 'T-003 erfolgreich geschlossen. Fortschritt: 75%!',
+          zh: 'T-003 已顺利关闭。整体开发指标：75%！',
+          ja: 'T-003 クローズ完了。進捗率: 75% となりました。'
+        }
+      },
+      // Task 4
+      { taskId: 'T-004', role: 'planner', status: 'ready', prep: 100, sound: 'sweep',
+        log: {
+          en: '[PLANNER] Task T-004 ready. Archiving wiki.',
+          ru: '[PLANNER] Задача T-004 готова к работе. Архивация Wiki.',
+          es: '[PLANNER] Tarea T-004 lista. Archivando wiki.',
+          fr: '[PLANNER] Tâche T-004 prête. Archivage du wiki.',
+          de: '[PLANNER] Aufgabe T-004 bereit. Wiki archivieren.',
+          zh: '[PLANNER] 任务 T-004 已就绪。正在归档整理知识库。',
+          ja: '[PLANNER] タスク T-004 準備完了。Wiki ドキュメントをアーカイブします。'
+        },
+        bubble: {
+          en: 'Analyzing destination wiki file structure.',
+          ru: 'Анализирую структуру результирующего Wiki-файла.',
+          es: 'Analizando la estructura del archivo wiki de destino.',
+          fr: 'Analyse de la structure du fichier wiki de destination.',
+          de: 'Struktur der Ziel-Wiki-Datei analysieren.',
+          zh: '整理当前维基的目录树结构。',
+          ja: '書き出し先となる Wiki ファイルの構図を分析しています。'
+        },
+        chat: {
+          en: 'Starting documentation sync.',
+          ru: 'Начинаем синхронизацию документации.',
+          es: 'Iniciando sincronización de documentación.',
+          fr: 'Début de la synchronisation de la documentation.',
+          de: 'Beginn der Dokumentationssynchronisierung.',
+          zh: '开启开发技术文档的批量同步流程。',
+          ja: 'ドキュメンテーションの同期書き出しに入ります。'
+        }
+      },
+      { taskId: 'T-004', role: 'worker', status: 'in_progress', prep: 100, sound: 'type',
+        log: {
+          en: '[WORKER] Created docs/auth-architecture.md layout.',
+          ru: '[WORKER] Создана схема docs/auth-architecture.md.',
+          es: '[WORKER] Creado diseño de docs/auth-architecture.md.',
+          fr: '[WORKER] Structure de docs/auth-architecture.md créée.',
+          de: '[WORKER] Layout für docs/auth-architecture.md erstellt.',
+          zh: '[WORKER] 编写开发设计文档 docs/auth-architecture.md。',
+          ja: '[WORKER] docs/auth-architecture.md ファイルにアーキテクチャ設計を書き下しました。'
+        },
+        bubble: {
+          en: 'Writing down env variables and token schemas.',
+          ru: 'Записываю переменные окружения и схему токенов.',
+          es: 'Escribiendo variables de entorno y esquemas de tokens.',
+          fr: 'Saisie des variables d\'environnement et des schémas de jetons.',
+          de: 'Umgebungsvariablen und Token-Schemata aufschreiben.',
+          zh: '记录系统支持的环境变量和安全令牌流转流程。',
+          ja: '使用する環境変数とトークンスキーマの定義を記録しています。'
+        },
+        chat: {
+          en: 'Session descriptions fully complete.',
+          ru: 'Описание сессий полностью готово.',
+          es: 'Descripciones de sesión completamente listas.',
+          fr: 'Descriptions de session entièrement complétées.',
+          de: 'Sitzungsbeschreibungen vollständig abgeschlossen.',
+          zh: '鉴权会话生命周期的相关描述文档已完成编写。',
+          ja: 'セッションハンドリング周りの仕様定義が完成しました。'
+        }
+      },
+      { taskId: 'T-004', role: 'reviewer', status: 'needs_review', prep: 100, sound: 'sweep',
+        log: {
+          en: '[REVIEWER] Analyzed links in docs: all links are valid.',
+          ru: '[REVIEWER] Анализ ссылок в docs: все ссылки валидны.',
+          es: '[REVIEWER] Analizados los enlaces en docs: todos los enlaces son válidos.',
+          fr: '[REVIEWER] Analyse des liens dans les docs : tous les liens sont valides.',
+          de: '[REVIEWER] Links in docs analysiert: Alle Links sind gültig.',
+          zh: '[REVIEWER] 全量检索文档链接关系。无任何空链失效问题。',
+          ja: '[REVIEWER] ドキュメント内の被リンク調査: リンク切れはありません。'
+        },
+        bubble: {
+          en: 'Checking accuracy of the documentation.',
+          ru: 'Проверяю корректность документации.',
+          es: 'Comprobando exactitud de la documentación.',
+          fr: 'Vérification de l\'exactitude de la documentation.',
+          de: 'Genauigkeit der Dokumentation überprüfen.',
+          zh: '校验维基内容的时效性和技术表述准确度。',
+          ja: '仕様説明の記載に曖昧な点がないかファクトチェックしています。'
+        },
+        chat: {
+          en: 'Descriptions are accurate, approving.',
+          ru: 'Описание точное, одобряю.',
+          es: 'Las descripciones son exactas, apruebo.',
+          fr: 'Les descriptions sont exactes, j\'approuve.',
+          de: 'Beschreibungen sind präzise, genehmige.',
+          zh: '文档表述真实有效。予以通过。',
+          ja: '内容の正確性を担保。承認します。'
+        }
+      },
+      { taskId: 'T-004', role: 'tester', status: 'approved', prep: 100, sound: 'bubble',
+        log: {
+          en: '[TESTER] Command: npx markdown-link-check docs/auth-architecture.md: OK.',
+          ru: '[TESTER] Команда: npx markdown-link-check docs/auth-architecture.md: OK.',
+          es: '[TESTER] Comando: npx markdown-link-check docs/auth-architecture.md: OK.',
+          fr: '[TESTER] Commande : npx markdown-link-check docs/auth-architecture.md : OK.',
+          de: '[TESTER] Befehl: npx markdown-link-check docs/auth-architecture.md: OK.',
+          zh: '[TESTER] 命令：npx markdown-link-check docs/auth-architecture.md。验证状态：OK。',
+          ja: '[TESTER] コマンド: npx markdown-link-check docs/auth-architecture.md。結果: OK。'
+        },
+        bubble: {
+          en: 'Launching markdown link checker.',
+          ru: 'Запускаю link-checker.',
+          es: 'Lanzando validador de enlaces markdown.',
+          fr: 'Lancement du vérificateur de liens markdown.',
+          de: 'Markdown-Link-Checker starten.',
+          zh: '执行 Markdown 链接一致性离线跑测。',
+          ja: 'Markdownドキュメントの被リンク検証バッチを走らせています。'
+        },
+        chat: {
+          en: 'No broken links discovered.',
+          ru: 'Битых ссылок не обнаружено.',
+          es: 'No se descubrieron enlaces rotos.',
+          fr: 'Aucun lien mort découvert.',
+          de: 'Keine fehlerhaften Links entdeckt.',
+          zh: '检测完成，未发现死链。',
+          ja: 'リンク切れは検出されませんでした。'
+        }
+      },
+      { taskId: 'T-004', role: 'docs', status: 'done', prep: 100, sound: 'success',
+        log: {
+          en: '[DOCS_SYNC] All tasks closed.\n[SYSTEM] Feature Auth-V2 is fully complete.',
+          ru: '[DOCS_SYNC] Все задачи закрыты.\n[SYSTEM] Фича Auth-V2 полностью завершена.',
+          es: '[DOCS_SYNC] Todas las tareas cerradas.\n[SYSTEM] La característica Auth-V2 está completamente terminada.',
+          fr: '[DOCS_SYNC] Toutes les tâches fermées.\n[SYSTEM] La fonctionnalité Auth-V2 est entièrement complétée.',
+          de: '[DOCS_SYNC] Alle Aufgaben geschlossen.\n[SYSTEM] Feature Auth-V2 ist vollständig abgeschlossen.',
+          zh: '[DOCS_SYNC] 计划关联任务均已关闭。\n[SYSTEM] 鉴权 V2 重构项目全部完成。',
+          ja: '[DOCS_SYNC] 全タスク完了。\n[SYSTEM] 重構認証 V2 プロジェクトは正常終了しました。'
+        },
+        bubble: {
+          en: 'Committing final version to Knowledge Base.',
+          ru: 'Фиксирую финальную версию в Базе Знаний.',
+          es: 'Registrando versión final en la Base de Conocimientos.',
+          fr: 'Enregistrement de la version finale dans la base de connaissances.',
+          de: 'Endgültige Version in der Wissensdatenbank speichern.',
+          zh: '提交最终文档集进入企业级共享知识库。',
+          ja: 'Wiki 知識ベースへ最終ドキュメントの反映をコミットしています。'
+        },
+        chat: {
+          en: 'Task plan closed with status SUCCESS! 🎉',
+          ru: 'Таскплан закрыт со статусом SUCCESS! 🎉',
+          es: '¡Plan de tareas cerrado con estado EXITOSO! 🎉',
+          fr: 'Plan de tâches fermé avec le statut SUCCESS ! 🎉',
+          de: 'Task-Plan geschlossen mit Status ERFOLGREICH! 🎉',
+          zh: '任务开发流程状态流转结束。成功收官！🎉',
+          ja: 'タスク計画は正常クローズ（SUCCESS）しました！🎉'
+        }
+      }
+    ];
+
+    const SIMULATION_STEPS = []; // filled dynamically on play/reset
+
+    // Node layout variables for Draggable graph
+    const NODE_WIDTH = 180;
+    const NODE_HEIGHT = 70;
+    const nodeCoords = {
+      'T-001': { x: 40, y: 90 },
+      'T-002': { x: 290, y: 30 },
+      'T-003': { x: 290, y: 160 },
+      'T-004': { x: 550, y: 95 }
+    };
+
+    // State
+    let currentLanguage = 'en'; // default is English!
+    let selectedTaskId = 'T-001';
+    let simulationIndex = 0;
+    let isPlaying = false;
+    let autoTimer = null;
+    let activeDragNode = null;
+    let dragOffset = { x: 0, y: 0 };
+    let typingInterval = null;
+
+    // Zoom & Pan state
+    let panX = 0;
+    let panY = 0;
+    let zoomScale = 1.0;
+    let isPanning = false;
+    let panStart = { x: 0, y: 0 };
+    const simulationSpeed = 2500; // 2.5 seconds per simulation step
+
+    // DOM Elements
+    let btnPlay, btnNext, btnFail, btnReset, consolePanel, chatLogs;
+    let taskTitle, taskGoal, taskOwner, taskStatus, taskTests;
+    let progressCircle, progressPercent, progressCompleted;
+
+    // --- INIT ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // Bind elements
+      btnPlay = document.getElementById('btn-play');
+      btnNext = document.getElementById('btn-next');
+      btnFail = document.getElementById('btn-fail');
+      btnReset = document.getElementById('btn-reset');
+      consolePanel = document.getElementById('terminal-console');
+      chatLogs = document.getElementById('chat-logs');
+
+      taskTitle = document.getElementById('task-title');
+      taskGoal = document.getElementById('task-goal');
+      taskOwner = document.getElementById('task-owner');
+      taskStatus = document.getElementById('task-status');
+      taskTests = document.getElementById('task-tests');
+
+      progressCircle = document.getElementById('progress-circle');
+      progressPercent = document.getElementById('progress-percent');
+      progressCompleted = document.getElementById('progress-completed');
+
+      // Setup drag and drop
+      setupDraggableGraph();
+
+      // Language selector listener
+      const langSelector = document.getElementById('lang-selector');
+      if (langSelector) {
+        langSelector.addEventListener('change', (e) => {
+          applyLanguage(e.target.value);
+        });
+      }
+
+      // TTS persistence listener
+      const chkTts = document.getElementById('chk-tts');
+      if (chkTts) {
+        chkTts.addEventListener('change', () => {
+          if (!chkTts.checked && window.speechSynthesis) {
+            window.speechSynthesis.cancel();
+          }
+        });
+      }
+
+      // BGM Playlist loader listener
+      const bgmUploader = document.getElementById('bgm-uploader');
+      const bgmStatus = document.getElementById('bgm-status');
+      if (bgmUploader) {
+        bgmUploader.addEventListener('change', (e) => {
+          const files = Array.from(e.target.files);
+          if (files.length > 0) {
+            bgmFileList = files;
+            bgmPlaylist = files.map(file => URL.createObjectURL(file));
+            bgmIndex = 0;
+            bgmStatus.textContent = `${files.length} track(s) loaded`;
+            if (sound.enabled) {
+              playBGM();
+            }
+          }
+        });
+      }
+
+      // Audio Drawer open/close listeners
+      const btnDrawer = document.getElementById('btn-audio-drawer');
+      if (btnDrawer) {
+        btnDrawer.addEventListener('click', toggleAudioDrawer);
+      }
+
+      const btnCloseDrawer = document.getElementById('btn-close-audio-drawer');
+      if (btnCloseDrawer) {
+        btnCloseDrawer.addEventListener('click', () => {
+          const drawer = document.getElementById('audio-drawer-panel');
+          const toggleBtn = document.getElementById('btn-audio-drawer');
+          if (drawer && toggleBtn) {
+            drawer.classList.remove('open');
+            toggleBtn.classList.remove('active');
+          }
+        });
+      }
+
+      // Volume sliders input listeners
+      const sliderBgm = document.getElementById('slider-bgm-vol');
+      const valBgm = document.getElementById('val-bgm-vol');
+      if (sliderBgm && valBgm) {
+        sliderBgm.addEventListener('input', (e) => {
+          bgmVolume = e.target.value / 100;
+          bgmPlayer.volume = bgmVolume;
+          valBgm.textContent = `${e.target.value}%`;
+        });
+      }
+
+      const sliderSfx = document.getElementById('slider-sfx-vol');
+      const valSfx = document.getElementById('val-sfx-vol');
+      if (sliderSfx && valSfx) {
+        sliderSfx.addEventListener('input', (e) => {
+          sfxVolume = e.target.value / 100;
+          valSfx.textContent = `${e.target.value}%`;
+        });
+      }
+
+      // Media player action listeners
+      const btnPlayPause = document.getElementById('drawer-btn-play-pause');
+      if (btnPlayPause) {
+        btnPlayPause.addEventListener('click', toggleBGMPlayPause);
+      }
+
+      const btnNextTrack = document.getElementById('drawer-btn-next');
+      if (btnNextTrack) {
+        btnNextTrack.addEventListener('click', playNextBGMTrack);
+      }
+
+      // Custom process sounds configurations
+      const btnCustomToggle = document.getElementById('btn-custom-sounds-toggle');
+      const configModal = document.getElementById('sound-config-modal');
+      if (btnCustomToggle && configModal) {
+        btnCustomToggle.addEventListener('click', () => {
+          const visible = configModal.style.display === 'block';
+          configModal.style.display = visible ? 'none' : 'block';
+        });
+      }
+
+      document.querySelectorAll('.sound-uploader').forEach(input => {
+        input.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          const type = input.dataset.soundType;
+          if (file && type) {
+            sound.init(); // ensure audio context is active
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+              sound.ctx.decodeAudioData(evt.target.result, (buffer) => {
+                customProcessSounds[type] = buffer;
+                console.log(`Custom sound loaded for: ${type}`);
+              }, (err) => {
+                console.warn(`Failed to decode audio for ${type}:`, err);
+              });
+            };
+            reader.readAsArrayBuffer(file);
+          }
+        });
+      });
+
+      // Update lines initially
+      updateGraphLines();
+
+      // Click listeners for Kanban
+      document.querySelectorAll('.kanban-card').forEach(card => {
+        card.addEventListener('click', () => {
+          selectTask(card.dataset.taskId);
+        });
+      });
+
+      // Graph node click selection
+      document.querySelectorAll('.graph-node').forEach(node => {
+        node.addEventListener('click', () => {
+          selectTask(node.dataset.taskId);
+        });
+      });
+
+      // Simulation controller hooks
+      document.getElementById('btn-play').addEventListener('click', togglePlay);
+      document.getElementById('btn-next').addEventListener('click', stepForward);
+      document.getElementById('btn-fail').addEventListener('click', triggerTestFailure);
+      document.getElementById('btn-reset').addEventListener('click', resetDashboard);
+
+      applyLanguage('en');
+      resetDashboard();
+    });
+
+    // --- LOCALIZATION ENGINE ---
+    function applyLanguage(lang) {
+      currentLanguage = lang;
+
+      // Update HTML elements with data-i18n
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        if (TRANSLATIONS[lang] && TRANSLATIONS[lang][key] !== undefined) {
+          el.textContent = TRANSLATIONS[lang][key];
+        }
+      });
+
+      // Translate TASKS from TASKS_LOCALIZED
+      Object.keys(TASKS).forEach(tid => {
+        const local = TASKS_LOCALIZED[lang][tid];
+        if (local) {
+          TASKS[tid].title = local.title;
+          TASKS[tid].goal = local.goal;
+          TASKS[tid].verification = local.verification;
+          TASKS[tid].dependencies = local.dependencies;
+          TASKS[tid].governance = local.governance;
+
+          // Update Kanban card title text
+          const card = document.getElementById(`card-${tid.toLowerCase().replace('-', '')}`);
+          if (card) {
+            const titleDiv = card.querySelector('.title');
+            if (titleDiv) titleDiv.textContent = local.title;
+          }
+
+          // Update graph node title
+          const nodeTitle = document.getElementById(`text-${tid.toLowerCase().replace('-', '')}-title`);
+          if (nodeTitle) nodeTitle.textContent = local.nodeTitle;
+        }
+      });
+
+      // Translate Kanban Column headers
+      const colHeaders = {
+        'k-col-1': TRANSLATIONS[lang].colDraftReady,
+        'k-col-2': TRANSLATIONS[lang].colWorkReview,
+        'k-col-3': TRANSLATIONS[lang].colApprBlock,
+        'k-col-4': TRANSLATIONS[lang].colDoneDrop
+      };
+      Object.keys(colHeaders).forEach(id => {
+        const col = document.getElementById(id);
+        if (col) {
+          const h3 = col.querySelector('h3');
+          if (h3) h3.textContent = colHeaders[id];
+        }
+      });
+
+      // Re-populate SIMULATION_STEPS from SIMULATION_STEPS_BASE using localized fields
+      SIMULATION_STEPS.length = 0;
+      SIMULATION_STEPS_BASE.forEach(step => {
+        SIMULATION_STEPS.push({
+          taskId: step.taskId,
+          role: step.role,
+          status: step.status,
+          prep: step.prep,
+          sound: step.sound,
+          log: step.log[lang] || step.log['en'],
+          bubble: step.bubble[lang] || step.bubble['en'],
+          chat: step.chat[lang] || step.chat['en']
+        });
+      });
+
+      // Update currently active details if needed
+      selectTask(selectedTaskId);
+    }
+
+    // --- SPEECH VOICE OVER (TTS) ---
+    function speakStepBubble(role, text, lang) {
+      if (!window.speechSynthesis) return;
+      const chk = document.getElementById('chk-tts');
+      if (!chk || !chk.checked) return;
+
+      // Cancel current speaking
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+
+      // Map general lang to speech lang format
+      const langMapping = {
+        en: 'en-US',
+        ru: 'ru-RU',
+        es: 'es-ES',
+        fr: 'fr-FR',
+        de: 'de-DE',
+        zh: 'zh-CN',
+        ja: 'ja-JP'
+      };
+      utterance.lang = langMapping[lang] || 'en-US';
+
+      // Set character voice pitch and rate
+      if (role === 'planner') {
+        utterance.pitch = 1.25;
+        utterance.rate = 1.0;
+      } else if (role === 'worker') {
+        utterance.pitch = 0.85;
+        utterance.rate = 1.1;
+      } else if (role === 'reviewer') {
+        utterance.pitch = 1.0;
+        utterance.rate = 0.95;
+      } else if (role === 'tester') {
+        utterance.pitch = 1.15;
+        utterance.rate = 1.05;
+      } else if (role === 'docs') {
+        utterance.pitch = 1.35;
+        utterance.rate = 1.0;
+      }
+
+      // Get all voices and find a match for language
+      const voices = window.speechSynthesis.getVoices();
+      const filtered = voices.filter(v => v.lang.startsWith(utterance.lang.substring(0, 2)));
+      if (filtered.length > 0) {
+        // Distribute voices by role within the language
+        const index = ['planner', 'worker', 'reviewer', 'tester', 'docs'].indexOf(role) % filtered.length;
+        utterance.voice = filtered[index];
+      }
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Select Task and sync visual highlights
+    function selectTask(taskId) {
+      selectedTaskId = taskId;
+
+      // Sync Kanban Selection
+      document.querySelectorAll('.kanban-card').forEach(c => c.classList.remove('selected'));
+      const activeCard = document.getElementById(`card-${taskId.toLowerCase().replace('-', '')}`);
+      if (activeCard) activeCard.classList.add('selected');
+
+      // Sync Draggable Graph nodes
+      document.querySelectorAll('.graph-node').forEach(n => n.classList.remove('active'));
+      const activeNode = document.getElementById(`node-${taskId.toLowerCase().replace('-', '')}`);
+      if (activeNode) activeNode.classList.add('active');
+
+      // Sync details UI card
+      const task = TASKS[taskId];
+      document.getElementById('det-goal').textContent = task.goal;
+      document.getElementById('det-verification').textContent = task.verification;
+      document.getElementById('det-dependencies').textContent = task.dependencies;
+      document.getElementById('det-governance').textContent = task.governance;
+
+      const govBox = document.getElementById('det-governance');
+      if ((['Нарушений нет', 'No violations', 'Sin infracciones', 'Aucune violation', 'Keine verstoße', 'Keine Verstöße', '无合规', '規約違反なし'].some(term => task.governance.includes(term)))) {
+        govBox.style.color = 'var(--c-tester)';
+      } else {
+        govBox.style.color = 'var(--c-alert)';
+      }
+
+      sound.playBeep();
+    }
+
+    // --- GRAPH DRAG AND DROP LOGIC ---
+    function updateViewportTransform() {
+      const group = document.getElementById('graph-viewport-group');
+      if (group) {
+        group.setAttribute('transform', `translate(${panX}, ${panY}) scale(${zoomScale})`);
+      }
+    }
+
+    function setupDraggableGraph() {
+      const svg = document.getElementById('graph-svg');
+
+      document.querySelectorAll('.graph-node').forEach(node => {
+        const taskId = node.dataset.taskId;
+
+        // Initial positioning
+        node.setAttribute('transform', `translate(${nodeCoords[taskId].x}, ${nodeCoords[taskId].y})`);
+
+        node.addEventListener('mousedown', (e) => {
+          activeDragNode = node;
+
+          // Calculate click offset relative to translation coordinates in zoom/pan space
+          const coords = nodeCoords[taskId];
+          const rect = svg.getBoundingClientRect();
+          const mouseX = (e.clientX - rect.left - panX) / zoomScale;
+          const mouseY = (e.clientY - rect.top - panY) / zoomScale;
+
+          dragOffset.x = mouseX - coords.x;
+          dragOffset.y = mouseY - coords.y;
+
+          // Elevate node visually in group
+          const group = document.getElementById('graph-viewport-group');
+          if (group) group.appendChild(node);
+          e.stopPropagation();
+        });
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (activeDragNode) {
+          const taskId = activeDragNode.dataset.taskId;
+          const rect = svg.getBoundingClientRect();
+
+          // Convert mouse coordinates using scale & translation
+          const mouseX = (e.clientX - rect.left - panX) / zoomScale;
+          const mouseY = (e.clientY - rect.top - panY) / zoomScale;
+
+          let newX = mouseX - dragOffset.x;
+          let newY = mouseY - dragOffset.y;
+
+          // Clip within wide virtual grid canvas boundaries
+          newX = Math.max(10, Math.min(1600 - NODE_WIDTH - 10, newX));
+          newY = Math.max(10, Math.min(1200 - NODE_HEIGHT - 10, newY));
+
+          nodeCoords[taskId].x = newX;
+          nodeCoords[taskId].y = newY;
+
+          activeDragNode.setAttribute('transform', `translate(${newX}, ${newY})`);
+          updateGraphLines();
+        } else if (isPanning) {
+          panX = e.clientX - panStart.x;
+          panY = e.clientY - panStart.y;
+          updateViewportTransform();
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        activeDragNode = null;
+        isPanning = false;
+      });
+
+      // Canvas background drag panning
+      svg.addEventListener('mousedown', (e) => {
+        if (e.target.id === 'graph-svg' || e.target.classList.contains('graph-connection-line') || e.target.tagName === 'svg') {
+          isPanning = true;
+          panStart.x = e.clientX - panX;
+          panStart.y = e.clientY - panY;
+          e.preventDefault();
+        }
+      });
+
+      // Mouse wheel zoom centering on cursor
+      svg.addEventListener('wheel', (e) => {
+        e.preventDefault();
+
+        const delta = e.deltaY * -0.0015;
+        const newScale = Math.max(0.25, Math.min(3.0, zoomScale + delta));
+
+        const rect = svg.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+
+        panX = mouseX - (mouseX - panX) * (newScale / zoomScale);
+        panY = mouseY - (mouseY - panY) * (newScale / zoomScale);
+        zoomScale = newScale;
+
+        updateViewportTransform();
+      });
+
+      // Reset zoom/pan event
+      const btnReset = document.getElementById('btn-reset-zoom');
+      if (btnReset) {
+        btnReset.addEventListener('click', () => {
+          panX = 0;
+          panY = 0;
+          zoomScale = 1.0;
+          updateViewportTransform();
+        });
+      }
+
+      // Fullscreen toggle event
+      const btnFullscreen = document.getElementById('btn-toggle-fullscreen');
+      const panel = document.getElementById('panel-dependency-graph');
+      if (btnFullscreen && panel) {
+        btnFullscreen.addEventListener('click', () => {
+          const isFull = panel.classList.contains('fullscreen-active');
+          if (isFull) {
+            panel.classList.remove('fullscreen-active');
+            btnFullscreen.style.background = '';
+          } else {
+            panel.classList.add('fullscreen-active');
+            btnFullscreen.style.background = 'var(--c-alert)';
+          }
+        });
+      }
+    }
+
+    // Dynamic Bezier Line Rerouting
+    function updateGraphLines() {
+      // Helper: get port coords based on relative positioning
+      const getOptimalPorts = (fromId, toId) => {
+        const from = nodeCoords[fromId];
+        const to = nodeCoords[toId];
+
+        const fromCenter = { x: from.x + NODE_WIDTH / 2, y: from.y + NODE_HEIGHT / 2 };
+        const toCenter = { x: to.x + NODE_WIDTH / 2, y: to.y + NODE_HEIGHT / 2 };
+
+        const dx = toCenter.x - fromCenter.x;
+        const dy = toCenter.y - fromCenter.y;
+
+        const portsFrom = {
+          top: { x: from.x + NODE_WIDTH / 2, y: from.y, dir: 'up' },
+          bottom: { x: from.x + NODE_WIDTH / 2, y: from.y + NODE_HEIGHT, dir: 'down' },
+          left: { x: from.x, y: from.y + NODE_HEIGHT / 2, dir: 'left' },
+          right: { x: from.x + NODE_WIDTH, y: from.y + NODE_HEIGHT / 2, dir: 'right' }
+        };
+
+        const portsTo = {
+          top: { x: to.x + NODE_WIDTH / 2, y: to.y, dir: 'up' },
+          bottom: { x: to.x + NODE_WIDTH / 2, y: to.y + NODE_HEIGHT, dir: 'down' },
+          left: { x: to.x, y: to.y + NODE_HEIGHT / 2, dir: 'left' },
+          right: { x: to.x + NODE_WIDTH, y: to.y + NODE_HEIGHT / 2, dir: 'right' }
+        };
+
+        if (Math.abs(dx) > Math.abs(dy)) {
+          // Horizontal alignment
+          if (dx > 0) {
+            return { from: portsFrom.right, to: portsTo.left };
+          } else {
+            return { from: portsFrom.left, to: portsTo.right };
+          }
+        } else {
+          // Vertical alignment
+          if (dy > 0) {
+            return { from: portsFrom.bottom, to: portsTo.top };
+          } else {
+            return { from: portsFrom.top, to: portsTo.bottom };
+          }
+        }
+      };
+
+      const drawBezier = (lineId, fromId, toId) => {
+        const ports = getOptimalPorts(fromId, toId);
+        const fromPort = ports.from;
+        const toPort = ports.to;
+        const line = document.getElementById(lineId);
+        if (!line) return;
+
+        // Calculate control points based on port directions
+        let cp1x = fromPort.x;
+        let cp1y = fromPort.y;
+        let cp2x = toPort.x;
+        let cp2y = toPort.y;
+
+        const strength = 60; // tension of bezier curves
+
+        if (fromPort.dir === 'right') cp1x += strength;
+        else if (fromPort.dir === 'left') cp1x -= strength;
+        else if (fromPort.dir === 'down') cp1y += strength;
+        else if (fromPort.dir === 'up') cp1y -= strength;
+
+        if (toPort.dir === 'right') cp2x += strength;
+        else if (toPort.dir === 'left') cp2x -= strength;
+        else if (toPort.dir === 'down') cp2y += strength;
+        else if (toPort.dir === 'up') cp2y -= strength;
+
+        const dStr = `M ${fromPort.x} ${fromPort.y} C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${toPort.x} ${toPort.y}`;
+        line.setAttribute('d', dStr);
+      };
+
+      // T-001 -> T-002
+      drawBezier('edge-t001-t002', 'T-001', 'T-002');
+      // T-002 -> T-003
+      drawBezier('edge-t002-t003', 'T-002', 'T-003');
+      // T-003 -> T-004
+      drawBezier('edge-t003-t004', 'T-003', 'T-004');
+    }
+
+    // Highlight connection line status
+    function setLineStatus(lineId, status) {
+      const line = document.getElementById(lineId);
+      line.classList.remove('active', 'blocked');
+      line.style.stroke = '#334155';
+      line.setAttribute('marker-end', 'url(#arrow)');
+
+      if (status === 'active') {
+        line.classList.add('active');
+        line.setAttribute('marker-end', 'url(#arrow-active)');
+      } else if (status === 'blocked') {
+        line.classList.add('blocked');
+        line.setAttribute('marker-end', 'url(#arrow-alert)');
+      } else if (status === 'done') {
+        line.style.stroke = 'var(--c-tester)';
+      }
+    }
+
+    // --- SIMULATION RUNNER ---
+    function togglePlay() {
+      if (isPlaying) pauseSimulation(); else playSimulation();
+    }
+
+    function playSimulation() {
+      isPlaying = true;
+      btnPlay.textContent = 'Пауза';
+      btnPlay.style.background = 'rgba(255, 157, 0, 0.15)';
+      btnPlay.style.borderColor = 'var(--c-worker)';
+
+      runSimulationStep();
+      autoTimer = setInterval(runSimulationStep, simulationSpeed);
+    }
+
+    function pauseSimulation() {
+      isPlaying = false;
+      btnPlay.textContent = 'Запуск симулятора';
+      btnPlay.style.background = '';
+      btnPlay.style.borderColor = '';
+
+      clearInterval(autoTimer);
+      stopTypingSound();
+    }
+
+    function stepForward() {
+      pauseSimulation();
+      runSimulationStep();
+    }
+
+    function runSimulationStep() {
+      if (simulationIndex >= SIMULATION_STEPS.length) {
+        pauseSimulation();
+        writeToConsole(TRANSLATIONS[currentLanguage].consoleComplete, 'system');
+        sound.playSuccess();
+        // Speak final success statement
+        const finalMsg = TRANSLATIONS[currentLanguage].consoleComplete.trim().replace('[SYSTEM] ', '');
+        speakStepBubble('docs', finalMsg, currentLanguage);
+        return;
+      }
+
+      const step = SIMULATION_STEPS[simulationIndex];
+
+      // Stop typing sounds
+      stopTypingSound();
+
+      // Audio trigger
+      if (step.sound === 'type') {
+        startTypingSound();
+      } else if (step.sound === 'sweep') {
+        sound.playSweep();
+      } else if (step.sound === 'bubble') {
+        sound.playBubble();
+        setTimeout(() => sound.playBubble(), 120);
+      } else if (step.sound === 'beep') {
+        sound.playTone(440, 'sawtooth', 0.2, 0.05);
+      } else if (step.sound === 'success') {
+        sound.playSuccess();
+      }
+
+      // Robot mood sync
+      setRobotFace('worker', step.role === 'worker' ? 'working' : 'happy');
+
+      // Set active task details card
+      selectTask(step.taskId);
+
+      // Sync active agent podium lights
+      activateAgentPodium(step.role);
+
+      // Speech bubble text
+      showSpeechBubble(step.role, step.bubble);
+
+      // Voice Over (TTS)
+      speakStepBubble(step.role, step.bubble, currentLanguage);
+
+      // Print console log
+      writeToConsole(step.log);
+
+      // Append Dialogue message
+      appendChatMessage(step.chat, step.role);
+
+      // Update Kanban node badge state
+      updateKanbanBadge(step.taskId, step.status, step.role);
+
+      // Calculate global stats and rings
+      updateGlobalMetrics(step.taskId, step.status, step.prep);
+
+      // Sync drag-and-drop node labels
+      updateGraphNodeLabel(step.taskId, step.status, step.role);
+
+      // Adjust connection line glow
+      syncArrowGlows();
+
+      simulationIndex++;
+    }
+
+    function activateAgentPodium(role) {
+      document.querySelectorAll('.agent-podium').forEach(p => {
+        p.classList.remove('active');
+        const b = p.querySelector('.speech-bubble');
+        if (b) b.classList.remove('visible');
+      });
+
+      const active = document.querySelector(`.agent-podium[data-role="${role}"]`);
+      if (active) active.classList.add('active');
+
+      const beam = document.getElementById('agent-laser-beam');
+      if (beam) {
+        let width = '0%';
+        if (role === 'planner') width = '10%';
+        else if (role === 'worker') width = '30%';
+        else if (role === 'reviewer') width = '50%';
+        else if (role === 'tester') width = '70%';
+        else if (role === 'docs') width = '90%';
+        beam.style.width = width;
+      }
+    }
+
+    function showSpeechBubble(role, text) {
+      const active = document.querySelector(`.agent-podium[data-role="${role}"]`);
+      if (!active) return;
+      const bubble = active.querySelector('.speech-bubble');
+      if (bubble) {
+        bubble.textContent = text;
+        setTimeout(() => bubble.classList.add('visible'), 100);
+      }
+    }
+
+    function writeToConsole(text, type = '') {
+      const lines = text.split('\n');
+      lines.forEach(line => {
+        const l = document.createElement('div');
+        l.className = 'console-line';
+        if (line.includes('[SYSTEM]')) l.classList.add('system');
+        else if (line.includes('Passed') || line.includes('Успешно') || line.includes('OK') || line.includes('одобрено')) l.classList.add('success');
+        else if (line.includes('Предупреждения') || line.includes('доработка') || line.includes('Отклонено')) l.classList.add('warn');
+        else if (line.includes('Ошибка') || line.includes('Сбой') || line.includes('завалился')) l.classList.add('error');
+
+        if (type === 'system') l.classList.add('system');
+
+        l.textContent = line;
+        consolePanel.appendChild(l);
+      });
+      consolePanel.scrollTop = consolePanel.scrollHeight;
+    }
+
+    function appendChatMessage(text, role) {
+      if (!text) return;
+      const c = document.createElement('div');
+      const isLeft = ['planner', 'reviewer', 'tester'].includes(role);
+      c.className = `chat-msg ${isLeft ? 'left' : 'right'}`;
+
+      const head = document.createElement('div');
+      head.className = 'chat-header';
+      head.style.color = `var(--c-${role})`;
+      head.textContent = role.toUpperCase();
+
+      const body = document.createElement('div');
+      body.className = 'chat-body';
+      body.textContent = text;
+
+      c.appendChild(head);
+      c.appendChild(body);
+      chatLogs.appendChild(c);
+      chatLogs.scrollTop = chatLogs.scrollHeight;
+    }
+
+    function updateKanbanBadge(taskId, status, role) {
+      const card = document.getElementById(`card-${taskId.toLowerCase().replace('-', '')}`);
+      const badge = document.getElementById(`badge-${taskId.toLowerCase().replace('-', '')}`);
+      if (!badge) return;
+
+      // Update badge text and color class
+      badge.textContent = status;
+      badge.className = 'card-badge';
+
+      if (status === 'ready') badge.classList.add('status-ready');
+      else if (status === 'in_progress') badge.classList.add('status-work');
+      else if (status === 'needs_review') badge.classList.add('status-review');
+      else if (status === 'done') badge.classList.add('status-done');
+      else if (status === 'blocked') badge.classList.add('status-blocked');
+
+      // Update execution state indicators
+      document.getElementById('exec-step').textContent = execStepChangeText[currentLanguage](role, status);
+      document.getElementById('exec-updated').textContent = new Date().toLocaleTimeString();
+
+      // Shift card to correct column physically!
+      const col1 = document.getElementById('k-col-1');
+      const col2 = document.getElementById('k-col-2');
+      const col3 = document.getElementById('k-col-3');
+      const col4 = document.getElementById('k-col-4');
+
+      if (['draft', 'ready'].includes(status)) col1.appendChild(card);
+      else if (['in_progress', 'needs_review'].includes(status)) col2.appendChild(card);
+      else if (['approved', 'blocked'].includes(status)) col3.appendChild(card);
+      else if (['done', 'dropped'].includes(status)) col4.prepend(card);
+    }
+
+    function updateGlobalMetrics(taskId, status, prep) {
+      // Feature preparation bar
+      document.getElementById('stat-prep').textContent = `${prep}%`;
+      document.getElementById('prep-fill').style.width = `${prep}%`;
+
+      // Done tasks count
+      let completedCount = 0;
+      let reviewCount = 0;
+      let testCount = 0;
+      let blockCount = 0;
+      let warningCount = 0;
+
+      Object.keys(TASKS).forEach(tid => {
+        let actualStatus = TASKS[tid].status;
+        if (tid === taskId) {
+          actualStatus = status;
+          TASKS[tid].status = status; // save state
+        }
+
+        if (actualStatus === 'done') completedCount++;
+        else if (actualStatus === 'needs_review') reviewCount++;
+        else if (actualStatus === 'approved') testCount++;
+        else if (actualStatus === 'blocked') blockCount++;
+      });
+
+      document.getElementById('stat-done').textContent = completedCount;
+      document.getElementById('stat-review').textContent = reviewCount;
+      document.getElementById('stat-test').textContent = testCount;
+      document.getElementById('stat-total').textContent = 4;
+
+      // Radial project percentage
+      const globalPercent = Math.round((completedCount / 4) * 100);
+      updateProgressRing(globalPercent);
+    }
+
+    function updateProgressRing(percent) {
+      const radius = 58;
+      const circumference = 2 * Math.PI * radius;
+      const offset = circumference - (percent / 100) * circumference;
+      if (progressCircle) progressCircle.style.strokeDashoffset = offset;
+      if (progressPercent) progressPercent.textContent = `${percent}%`;
+      if (progressCompleted) progressCompleted.textContent = `${Math.round(percent / 25)} / 4`;
+    }
+
+    function updateGraphNodeLabel(taskId, status, role) {
+      const node = document.getElementById(`node-${taskId.toLowerCase().replace('-', '')}`);
+      if (!node) return;
+      const textOwner = document.getElementById(`text-${taskId.toLowerCase().replace('-', '')}-owner`);
+      const statusDot = node.querySelector('circle');
+
+      if (textOwner) {
+        textOwner.textContent = role.toUpperCase();
+        textOwner.style.fill = `var(--c-${role})`;
+      }
+
+      node.classList.remove('done', 'blocked', 'active');
+      if (statusDot) statusDot.setAttribute('fill', 'var(--muted)');
+
+      if (status === 'done') {
+        node.classList.add('done');
+        if (statusDot) statusDot.setAttribute('fill', 'var(--c-tester)');
+      } else if (status === 'blocked') {
+        node.classList.add('blocked');
+        if (statusDot) statusDot.setAttribute('fill', 'var(--c-alert)');
+      } else if (status === 'in_progress' || status === 'needs_review') {
+        node.classList.add('active');
+        if (statusDot) statusDot.setAttribute('fill', 'var(--c-worker)');
+      }
+    }
+
+    function syncArrowGlows() {
+      const t1 = TASKS['T-001'].status;
+      const t2 = TASKS['T-002'].status;
+      const t3 = TASKS['T-003'].status;
+      const t4 = TASKS['T-004'].status;
+
+      // Reset
+      setLineStatus('edge-t001-t002', 'none');
+      setLineStatus('edge-t002-t003', 'none');
+      setLineStatus('edge-t003-t004', 'none');
+
+      // T-001 -> T-002
+      if (t1 === 'done') {
+        if (t2 === 'in_progress') setLineStatus('edge-t001-t002', 'active');
+        else if (t2 === 'blocked') setLineStatus('edge-t001-t002', 'blocked');
+        else if (['done', 'approved', 'needs_review'].includes(t2)) setLineStatus('edge-t001-t002', 'done');
+      }
+
+      // T-002 -> T-003
+      if (t2 === 'done') {
+        if (t3 === 'in_progress') setLineStatus('edge-t002-t003', 'active');
+        else if (t3 === 'blocked') setLineStatus('edge-t002-t003', 'blocked');
+        else if (['done', 'approved', 'needs_review'].includes(t3)) setLineStatus('edge-t002-t003', 'done');
+      }
+
+      // T-003 -> T-004
+      if (t3 === 'done') {
+        if (t4 === 'in_progress') setLineStatus('edge-t003-t004', 'active');
+        else if (t4 === 'blocked') setLineStatus('edge-t003-t004', 'blocked');
+        else if (['done', 'approved', 'needs_review'].includes(t4)) setLineStatus('edge-t003-t004', 'done');
+      }
+    }
+
+    function triggerTestFailure() {
+      pauseSimulation();
+      sound.playFailure();
+
+      setRobotFace('worker', 'sad');
+
+      const logs = TRANSLATIONS[currentLanguage].failureLogs;
+
+      writeToConsole(logs.cmd, 'system');
+      writeToConsole(logs.run, 'system');
+      writeToConsole(logs.err, 'error');
+      writeToConsole(logs.reason, 'error');
+      writeToConsole(logs.gov, 'error');
+      writeToConsole(logs.block, 'error');
+
+      // Update current active task state to blocked
+      TASKS['T-003'].status = 'blocked';
+      updateKanbanBadge('T-003', 'blocked', 'tester');
+      updateGraphNodeLabel('T-003', 'blocked', 'tester');
+      syncArrowGlows();
+
+      activateAgentPodium('tester');
+      showSpeechBubble('tester', logs.speech);
+      speakStepBubble('tester', logs.speech, currentLanguage);
+
+      appendChatMessage(logs.chat, 'tester');
+    }
+
+    function resetDashboard() {
+      pauseSimulation();
+      simulationIndex = 0;
+      updateProgressRing(0);
+      setRobotFace('worker', 'normal');
+      const beam = document.getElementById('agent-laser-beam');
+      if (beam) beam.style.width = '0%';
+
+      consolePanel.innerHTML = '<div class="console-line system">' + TRANSLATIONS[currentLanguage].consoleReset + '</div>';
+      chatLogs.innerHTML = '<div class="chat-msg left"><div class="chat-header" style="color: var(--c-planner);">System</div><div class="chat-body">' + TRANSLATIONS[currentLanguage].chatWaiting + '</div></div>';
+
+      // Reset tasks state
+      Object.keys(TASKS).forEach(tid => {
+        TASKS[tid].status = tid === 'T-001' ? 'ready' : 'draft';
+        updateKanbanBadge(tid, TASKS[tid].status, TASKS[tid].owner);
+        updateGraphNodeLabel(tid, TASKS[tid].status, TASKS[tid].owner);
+      });
+
+      // Reset node coordinates
+      nodeCoords['T-001'] = { x: 40, y: 90 };
+      nodeCoords['T-002'] = { x: 290, y: 30 };
+      nodeCoords['T-003'] = { x: 290, y: 160 };
+      nodeCoords['T-004'] = { x: 550, y: 95 };
+
+      // Reset Zoom and Translation
+      panX = 0;
+      panY = 0;
+      zoomScale = 1.0;
+      updateViewportTransform();
+
+      // Update visual nodes and lines
+      Object.keys(nodeCoords).forEach(tid => {
+        const node = document.getElementById(`node-${tid.toLowerCase().replace('-', '')}`);
+        node.setAttribute('transform', `translate(${nodeCoords[tid].x}, ${nodeCoords[tid].y})`);
+      });
+      updateGraphLines();
+      syncArrowGlows();
+
+      // Set active
+      selectTask('T-001');
+      activateAgentPodium('planner');
+
+      document.getElementById('exec-commit').textContent = 'sha-8fa19bc2';
+      document.getElementById('exec-step').textContent = (currentLanguage === 'ru' ? 'Инициализация планировщика' : 'Scheduler initialization');
+      document.getElementById('exec-updated').textContent = new Date().toLocaleTimeString();
+    }
+
+    function setRobotFace(role, mood) {
+      if (role === 'worker') {
+        const eyes = document.getElementById('worker-eyes');
+        if (!eyes) return;
+        if (mood === 'working') {
+          eyes.setAttribute('d', 'M 24 26 L 29 24 M 35 24 L 40 26'); // Concentrated
+        } else if (mood === 'happy') {
+          eyes.setAttribute('d', 'M 24 26 C 26 23, 27 23, 29 26 M 35 26 C 37 23, 38 23, 40 26'); // Happy arches
+        } else if (mood === 'sad') {
+          eyes.setAttribute('d', 'M 24 24 C 26 27, 27 27, 29 24 M 35 24 C 37 27, 38 27, 40 24'); // Sad curves
+        } else {
+          eyes.setAttribute('d', 'M 24 25 L 29 25 M 35 25 L 40 25'); // Flat line
+        }
+      }
+    }
+
+    function startTypingSound() {
+      typingInterval = setInterval(() => sound.playTyping(), 80);
+    }
+
+    function stopTypingSound() {
+      if (typingInterval) {
+        clearInterval(typingInterval);
+        typingInterval = null;
+      }
+    }
+  </script>
+</body>
+</html>

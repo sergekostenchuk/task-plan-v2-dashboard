@@ -1,5 +1,10 @@
 # TASK-PLAN v2
 
+template_note:
+- This scaffold may contain `TBD` only while the plan or task is still `draft`.
+- Before any task moves to `ready`, `in_progress`, `approved`, or `done`, replace each critical `TBD` with a real value or convert it into an explicit active alarm.
+- Silent mocks and silent placeholders are forbidden.
+
 project:
 plan_id:
 plan_version:
@@ -57,6 +62,13 @@ feature_preparation_path: FEATURE-PREPARATION.md
 preimplementation_status: draft
 entry_rule: No implementation task may move to ready until the feature-preparation gate is complete.
 
+## Active Alarms
+
+feature_active_alarms:
+- none
+feature_resolved_alarms:
+- none
+
 ## Execution Policy
 
 orchestration_mode: sequential_multi_agent
@@ -84,17 +96,28 @@ no_fiction_policy:
 - do not invent files, commits, test results, approvals, blockers, or artifact paths
 - use unknown only for non-critical fields
 - critical unknowns block ready, in_progress, approved, and done
+mock_policy:
+- mocks, stubs, fake integrations, dummy outputs, and pretend backends are forbidden by default
+- if a mock is temporarily unavoidable, create an active alarm instead of hiding it in assumptions or prose
+- active mock alarms must state missing_to_replace, replacement_target, replacement_plan, and blocks
 placeholder_policy:
-- TBD is allowed only while task status is draft
-- ready or in_progress is forbidden if critical fields are TBD
+- placeholders are forbidden by default outside planning notes
+- if a placeholder is temporarily unavoidable, create an active alarm instead of leaving a silent TBD
+- ready or in_progress is forbidden if critical fields are placeholders without an active alarm
 - placeholder evidence is forbidden
 - placeholder tests are forbidden
 - placeholder artifact paths are forbidden
+alarm_propagation_policy:
+- every active alarm must be copied into the task prompt
+- every active alarm must be copied into runtime projections
+- every active alarm must be repeated in handoff summaries until resolved
+- each alarm must say exactly what is missing to replace the mock or placeholder
 prompt_policy:
 - one task equals one prompt
 - prompt must exist before in_progress
 - prompt must include RESUME_FROM
 - prompt must include scope_in, scope_out, forbidden_areas, and verification_strategy
+- prompt must include all active alarms relevant to the task
 code_first_policy:
 - implementation tasks require code progress before docs-sync closure
 - docs-only closure is allowed only for docs-governance tasks
@@ -179,6 +202,10 @@ rationale:
 priority: P1
 status: draft
 owner_role: planner
+active_alarm_ids:
+- none
+resolved_alarm_ids:
+- none
 agent_sequence:
 - planner
 - implementer
@@ -236,6 +263,13 @@ security_privacy_notes:
 - TBD
 non_functional_requirements:
 - TBD
+
+#### Active Alarms
+
+active_alarms:
+- none
+resolved_alarms:
+- none
 
 #### Verification Strategy
 
@@ -316,6 +350,49 @@ cleanup_warnings:
 - [ ] Old configs/flags from replaced implementation deleted
 - [ ] Relevant verification rerun after cleanup
 - [ ] Cleanup report documented in task artifacts
+
+#### Alarm Register
+
+##### A-MOCK-001
+alarm_id: A-MOCK-001
+alarm_type: mock
+severity: blocking
+status: resolved
+scope: task
+applies_to: T-001
+location: example/mock-surface
+summary: Replace any temporary mock backend before the task can leave execution-ready states.
+current_value: none
+why_present: Use this block only when a mock is temporarily unavoidable.
+missing_to_replace: TBD only if the task is still draft
+replacement_target: real dependency, real backend, or real artifact
+replacement_plan: describe the concrete step that removes the mock
+owner_role: planner
+blocks:
+- ready
+- in_progress
+- done
+must_propagate: true
+
+##### A-PH-001
+alarm_id: A-PH-001
+alarm_type: placeholder
+severity: warning
+status: resolved
+scope: task
+applies_to: T-001
+location: example/placeholder-surface
+summary: Replace silent placeholders with real values or convert them into explicit alarms.
+current_value: none
+why_present: Use this block only when a placeholder is temporarily unavoidable.
+missing_to_replace: exact missing fact, credential, artifact path, or decision
+replacement_target: real value or resolved field
+replacement_plan: describe the concrete step that removes the placeholder
+owner_role: planner
+blocks:
+- ready
+- in_progress
+must_propagate: true
 
 #### Agent Contracts
 

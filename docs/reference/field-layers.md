@@ -62,12 +62,17 @@ Keep it near `Execution Policy` in `TASK-PLAN.md`.
 | `boundary_audit_policy` | Scope and forbidden area enforcement | Scope violations block or reopen |
 | `rollback_policy` | Revert/forward-fix/reopen rules | Failed checks cannot jump directly to done |
 | `timeout_escalation_policy` | Timebox and stuck-loop handling | Escalate stale `in_progress` or exhausted review loops |
+| `mock_policy` | Forbid silent mocks and fake integrations | Temporary mocks require alarms |
+| `placeholder_policy` | Forbid silent placeholders in execution-ready work | Temporary placeholders require alarms |
+| `alarm_propagation_policy` | Force unresolved alarms into every downstream context | Prompt, projection, handoff, dashboard |
 
 Recommended hard rules:
 - `ready`, `in_progress`, `approved`, and `done` are forbidden if critical fields are `TBD`.
 - Placeholder evidence, placeholder tests, and placeholder artifact paths are forbidden.
 - `done` is invalid if required tests were not run or if required artifacts are missing.
 - `Task Register` and detailed task block must stay synchronized.
+- Mocks, stubs, fake backends, dummy outputs, or placeholder integrations are forbidden by default.
+- If a mock or placeholder is temporarily unavoidable, it must be recorded as an active alarm with an explicit replacement path.
 
 ## 4. Task-Level Fields
 
@@ -104,6 +109,8 @@ These fields live inside each normalized task block.
 | `acceptance_checks` | Concrete acceptance checks | Higher-level than raw test commands |
 | `exit_criteria` | Gate to leave the task | Stronger than "code written" |
 | `rollback_plan` | Backout path | Must be explicit for risky work |
+| `active_alarm_ids` | Alarm ids still unresolved for this task | Keep empty when none exist |
+| `resolved_alarm_ids` | Alarm ids resolved during this task | Useful for audit/history |
 
 Recommended task status enum:
 - `draft`
@@ -208,7 +215,36 @@ These fields capture executed evidence and reporting after work is performed.
 | `wiki_facts_to_capture` | Facts to preserve | Exact facts only |
 | `wiki_do_not_store` | Facts excluded from wiki | Secrets and noise |
 
-## 8. Overlap Rules
+## 8. Alarm Fields
+
+Use alarms when a plan cannot yet avoid a mock or placeholder. Do not hide them in paragraphs.
+
+| Field | Purpose | Notes |
+| --- | --- | --- |
+| `alarm_id` | Stable alarm identifier | Example: `A-MOCK-001`, `A-PH-003` |
+| `alarm_type` | Alarm type | `mock` or `placeholder` |
+| `severity` | Alarm severity | `warning`, `blocking`, `critical` |
+| `status` | Alarm state | `active`, `resolved`, `accepted-risk` |
+| `scope` | Where the alarm applies | `feature`, `task`, `prompt`, `runtime` |
+| `applies_to` | Feature id or task id | Keep explicit |
+| `location` | File, field, subsystem, or dependency surface | What exactly contains the mock or placeholder |
+| `summary` | Short human-readable statement | One sentence |
+| `current_value` | The current mocked or placeholder value | Example: `MockLLMBackend`, `TBD telegraph token env name` |
+| `why_present` | Why it currently exists | Must be factual, not vague |
+| `missing_to_replace` | Exact missing fact or dependency | The key field the user asked for |
+| `replacement_target` | What should exist after replacement | Real backend, real artifact, real value |
+| `replacement_plan` | Concrete replacement approach | How the team intends to remove it |
+| `owner_role` | Who owns the replacement | `planner`, `implementer`, `reviewer`, etc. |
+| `blocks` | Which transitions it blocks | Example: `ready`, `in_progress`, `done` |
+| `must_propagate` | Whether it must be copied forward | Recommended `true` for every active alarm |
+
+Recommended hard rules:
+- Active alarms must be copied into every task prompt and runtime projection that touches the same feature or task.
+- `missing_to_replace` must be concrete. "Need more work" is not concrete enough.
+- `replacement_plan` must say what exactly will remove the mock or placeholder.
+- Critical active alarms block `ready`, `in_progress`, `approved`, or `done` according to their `blocks` field.
+
+## 9. Overlap Rules
 
 Some fields can appear at both feature and task level.
 
@@ -218,7 +254,7 @@ Some fields can appear at both feature and task level.
 - `risks`: feature level is broad; task level is action-specific.
 - `wiki_*`: keep at feature level if shared, repeat at task level only when a task has special sync rules.
 
-## 9. Normalization Rules
+## 10. Normalization Rules
 
 - Prefer stable `key: value` lines under Markdown headings over loose prose.
 - Keep lists flat.
@@ -227,3 +263,4 @@ Some fields can appear at both feature and task level.
 - If a field is unknown and non-critical, keep the field and mark it unknown.
 - If a field is unknown and critical for safe execution, keep the task not-ready.
 - `Verification Strategy` headings are allowed, but fields should remain normal `key: value` lines for dashboard parsing.
+- If a mock or placeholder exists, create a structured alarm block instead of hiding it in `assumptions` or `open_questions`.

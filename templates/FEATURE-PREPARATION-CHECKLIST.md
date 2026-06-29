@@ -36,6 +36,7 @@ last_updated:
 - [ ] Понятно, какие API/events/contracts нужны
 - [ ] Определены ограничения и forbidden areas
 - [ ] Решено, нужен ли preview/dry-run mode
+- [ ] Если предлагаются mock/stub/placeholder элементы, на них заведены alarms с условиями замены
 
 ## 5. Verification
 - [ ] Для фичи есть acceptance criteria
@@ -45,6 +46,7 @@ last_updated:
 - [ ] Определен oracle успеха
 - [ ] Определены negative tests
 - [ ] Определены regression risks
+- [ ] Понятно, чего именно не хватает, чтобы заменить каждый временный mock/placeholder
 
 ## 6. Delivery and rollout
 - [ ] Определен MVP-срез

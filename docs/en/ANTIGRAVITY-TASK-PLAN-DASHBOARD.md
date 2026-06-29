@@ -23,9 +23,9 @@ and turns them into:
 - a tree view in the activity bar
 - a dashboard panel
 
-## 2. Installation location
+## 2. Repository source
 
-Current local installation:
+Current repository source:
 
 - [package.json](../../extension/task-plan-dashboard/package.json)
 - [extension.js](../../extension/task-plan-dashboard/extension.js)
@@ -39,8 +39,8 @@ Runtime-specific user profile files such as `extensions.json` and `.obsolete` ar
 Current values:
 
 - extension id: `local.task-plan-dashboard`
-- folder: `local.task-plan-dashboard-1.0.0`
-- display name: `Task Plan Dashboard`
+- installed folder / display version: `local.task-plan-dashboard-2.0.2`
+- package version: `2.0.2`
 - publisher: `local`
 
 These values matter when you:
@@ -70,12 +70,16 @@ The dashboard shows:
 - feature hero block
 - summary cards
 - feature-preparation readiness
+- Agent Arena with animated role cards
 - kanban columns
-- dependency graph
+- improved kanban behavior, including newest-first done ordering
+- interactive dependency graph with zoom, pan, fullscreen, and drag controls
 - selected-task details
 - owner breakdown
 - event timeline
 - artifact links
+- floating audio drawer
+- stage message overlay above the robot area
 
 ## 5. Canonical inputs
 
@@ -139,6 +143,11 @@ The extension now supports:
 
 - `en`
 - `ru`
+- `es`
+- `fr`
+- `de`
+- `zh`
+- `ja`
 - `auto`
 
 Setting:
@@ -148,10 +157,9 @@ Setting:
 Rules:
 
 - `auto` follows the Antigravity UI language
-- `en` forces English dashboard strings
-- `ru` forces Russian dashboard strings
+- any explicit language code forces that dashboard language
 
-English and Russian share the same schema and behavior. Only the UI strings differ.
+All dashboard locales share the same schema and behavior. Only the UI strings differ.
 
 ## 8. English demo workspace
 
@@ -211,7 +219,7 @@ That allows the UI to show:
 - whether the task is waiting on review
 - whether it reached the test gate
 
-## 11. What v1 supports
+## 11. What 2.0.2 supports
 
 Current version supports:
 
@@ -219,20 +227,23 @@ Current version supports:
 - activity bar tree
 - summary cards
 - kanban
-- dependency graph
+- newest-first ordering in the done column
+- Agent Arena with animated role cards
+- dependency graph with zoom, pan, fullscreen, and drag controls
 - selected task details
 - owner breakdown
 - event timeline
 - artifact opening
-- language selection for dashboard UI
+- in-panel language selection for seven dashboard locales
+- floating audio drawer with bundled BGM wiring
+- stage message overlay above the robot area
 
-## 12. What v1 does not support
+## 12. What 2.0.2 does not support
 
 Current version does not support:
 
 - editing `TASK-PLAN.md` from the UI
-- drag-and-drop kanban
-- status mutation from the panel
+- kanban status mutation from the panel
 - transcript-derived authoritative state
 - multi-repo aggregation
 - server sync
@@ -272,7 +283,7 @@ If the extension is not visible:
 Verify:
 
 - repository source folder: `extension/task-plan-dashboard`
-- local install target: `<USER_HOME>/.antigravity/extensions/local.task-plan-dashboard-1.0.0`
+- local install target: `<USER_HOME>/.antigravity/extensions/local.task-plan-dashboard-2.0.2`
 
 ### Check 2. Registry entry exists
 
@@ -327,11 +338,14 @@ Recommended smoke flow:
 4. Run `Task Plan: Open Dashboard`
 5. Confirm that the panel shows:
    - summary cards
+   - Agent Arena
    - kanban
    - dependency graph
+   - graph zoom, pan, fullscreen, and drag controls
    - selected task details
    - owner breakdown
    - event timeline
+   - floating audio drawer
 6. Click a task card and confirm the selected-task panel updates
 7. Click an artifact link and confirm the file opens
 

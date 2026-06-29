@@ -1,8 +1,8 @@
 {
   "name": "task-plan-dashboard",
-  "displayName": "Task Plan Dashboard",
+  "displayName": "local.task-plan-dashboard-2.0.2",
   "description": "Track TASK-PLAN v2 progress in Antigravity with status groups, dependency graph, review/test gates, and agent event timeline.",
-  "version": "1.0.0",
+  "version": "2.0.2",
   "publisher": "local",
   "engines": {
     "vscode": "^1.107.0"
@@ -105,9 +105,14 @@
           "enum": [
             "auto",
             "en",
-            "ru"
+            "ru",
+            "es",
+            "fr",
+            "de",
+            "zh",
+            "ja"
           ],
-          "description": "Dashboard language. Use 'auto' to follow the Antigravity UI language, or force English/Russian explicitly."
+          "description": "Dashboard language. Use 'auto' to follow the Antigravity UI language, or force English, Russian, Spanish, French, German, Chinese, or Japanese explicitly."
         }
       }
     }

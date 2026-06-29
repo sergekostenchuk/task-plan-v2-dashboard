@@ -14,9 +14,18 @@ Current implementation notes:
 - plain JavaScript extension
 - no build step required for the current version
 - locale files live in `resources/locales`
+- supported dashboard locales: `en`, `ru`, `es`, `fr`, `de`, `zh`, `ja`
+- the webview now supports an in-panel language switcher
+- the webview includes a floating audio drawer, bundled BGM wiring, manual task narration, and smarter dependency routing
 - demo workspaces are resolved relative to the repository:
   - `../../examples/demo-ru`
   - `../../examples/demo-en`
+
+Runtime validation:
+
+- `node -c extension.js`
+- parse `resources/locales/*.json`
+- reload the extension host and open `Task Plan: Open Dashboard`
 
 Recommended repository-facing install and packaging work:
 

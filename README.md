@@ -14,8 +14,61 @@ This is relevant to Codex-style OSS maintenance because it turns agent work into
 2. Copy [`templates/TASK-PLAN-v2.template.md`](./templates/TASK-PLAN-v2.template.md) into a project as `TASK-PLAN.md`.
 3. Open one of the demo workspaces in [`examples/`](./examples/) to see a filled plan.
 4. Inspect the dashboard extension source in [`extension/task-plan-dashboard/`](./extension/task-plan-dashboard/).
+5. Use the bootstrap prompts in [`prompts/`](./prompts/) when asking another coding agent to install or fork this package.
 
 Status: public OSS package, documentation-first, with extension packaging and CI planned as next steps.
+
+## Watch Demo
+
+[![Watch the TASK-PLAN v2 demo](./media/screenshots/photo_1_2026-04-22_16-26-52.jpg)](https://youtu.be/MJWp7OoApRs)
+
+- [YouTube demo](https://youtu.be/MJWp7OoApRs)
+- [Repository MP4](./media/task-plan-dashboard-presentation.mp4)
+
+## Start Here With Any Coding Agent
+
+If you want Codex, Claude Code, Gemini, GLM, Kimi, GitHub Copilot, Qwen, DeepSeek, or a similar coding agent to fork this package or install `TASK-PLAN v2` into your own repository, start with these files:
+
+- [English bootstrap prompt](./prompts/AGENT-BOOTSTRAP-TASK-PLAN-v2.en.md)
+- [Russian bootstrap prompt](./prompts/AGENT-BOOTSTRAP-TASK-PLAN-v2.ru.md)
+- [Bootstrap workspace README](./examples/agent-bootstrap/README.md)
+- [Bootstrap FEATURE-PREPARATION](./examples/agent-bootstrap/FEATURE-PREPARATION.md)
+- [Bootstrap TASK-PLAN](./examples/agent-bootstrap/TASK-PLAN.md)
+
+How to use them:
+
+1. Give your agent one bootstrap prompt.
+2. Give your agent the bootstrap workspace.
+3. Give your agent real runtime inputs:
+- source package path or URL
+- target repository path or URL
+- install mode
+- install scope
+- branch name
+- GitHub auth status
+4. Require the agent to use the bootstrap `TASK-PLAN.md` as the canonical control document, not an ad hoc checklist.
+
+Expected outcome:
+
+- a standalone fork or in-repo bootstrap
+- root `FEATURE-PREPARATION.md` and `TASK-PLAN.md` installed in the target repository
+- selected templates, docs, prompts, and optional dashboard assets copied into place
+- real verification evidence, and optionally a commit or PR if requested and possible
+
+This folder is a GitHub-ready bundle for publishing the `TASK-PLAN v2` planning system, the Antigravity dashboard extension, bilingual docs, demo workspaces, and media.
+
+## Current Dashboard Release
+
+The production extension UI is `local.task-plan-dashboard-2.0.2`.
+
+This release brings the animated demo experience into the real Antigravity / VS Code-compatible extension:
+
+- Agent Arena with animated role cards
+- interactive dependency graph with zoom, pan, fullscreen, and drag controls
+- improved kanban behavior, including newest-first ordering in the done column
+- floating audio drawer with bundled BGM wiring
+- in-panel language switching for `en`, `ru`, `es`, `fr`, `de`, `zh`, and `ja`
+- stage message overlay above the robot area with a close button
 
 ## What is included
 
@@ -49,16 +102,25 @@ This is the repository-safe source version of the local Antigravity dashboard ex
 
 - `examples/demo-en/`
 - `examples/demo-ru/`
+- `examples/agent-bootstrap/`
 
-Each example includes:
+Demo workspaces include:
 
 - `FEATURE-PREPARATION.md`
 - `TASK-PLAN.md`
 - `.task-plan/events.jsonl`
 - task artifacts
 
+The bootstrap workspace includes:
+
+- `FEATURE-PREPARATION.md`
+- `TASK-PLAN.md`
+- a usage `README.md`
+
 ### Prompts
 
+- `prompts/AGENT-BOOTSTRAP-TASK-PLAN-v2.en.md`
+- `prompts/AGENT-BOOTSTRAP-TASK-PLAN-v2.ru.md`
 - `prompts/REMOTION-PROMPT-TASK-PLAN-DASHBOARD.en.md`
 - `prompts/REMOTION-PROMPT-TASK-PLAN-DASHBOARD.ru.md`
 
@@ -81,6 +143,7 @@ skills/
 extension/
   task-plan-dashboard/
 examples/
+  agent-bootstrap/
   demo-en/
   demo-ru/
 prompts/

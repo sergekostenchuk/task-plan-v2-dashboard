@@ -21,6 +21,35 @@ A plain checklist is not enough for AI-assisted delivery. It usually misses:
 
 `TASK-PLAN v2` fixes that by turning planning into a structured operating document rather than a loose note.
 
+## 1.1. Hard Rule: no mocks, no placeholders
+
+The system now treats these as default prohibitions:
+
+- `no mocks`
+- `no placeholders`
+
+That means:
+
+- no silent mock backend, stub, fake integration, dummy output, or fake evidence in execution-ready work
+- no silent `TBD`, placeholder path, placeholder test, or placeholder artifact in execution-ready work
+
+If a mock or placeholder is temporarily unavoidable, it must become an explicit **replacement alarm**.
+
+Each active alarm must state:
+
+- what is mocked or placeholder now
+- why it still exists
+- what exactly is missing to replace it
+- what the real replacement target is
+- who owns the replacement
+- which transitions it blocks: `ready`, `in_progress`, `approved`, `done`
+
+Every active alarm must also be carried into:
+
+- the next task prompt
+- the runtime projection
+- the handoff summary
+
 ## 2. The three-layer model
 
 The system has three core layers:
