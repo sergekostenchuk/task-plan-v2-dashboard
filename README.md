@@ -10,7 +10,7 @@ This is relevant to Codex-style OSS maintenance because it turns agent work into
 
 ## Quick start
 
-1. Install the package from npm: `npm install task-plan-v2-dashboard`.
+1. After npm publication, install the package: `npm install task-plan-v2-dashboard`.
 2. Read the English guide: [`docs/en/TASKS-GENERAL-INSTRUCTIONS.md`](./docs/en/TASKS-GENERAL-INSTRUCTIONS.md).
 3. Copy [`templates/TASK-PLAN-v2.template.md`](./templates/TASK-PLAN-v2.template.md) into a project as `TASK-PLAN.md`.
 4. Open one of the demo workspaces in [`examples/`](./examples/) to see a filled plan.
