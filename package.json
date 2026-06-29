@@ -1,0 +1,50 @@
+{
+  "name": "task-plan-v2-dashboard",
+  "version": "2.0.2",
+  "description": "TASK-PLAN v2 planning system and Antigravity dashboard package.",
+  "license": "MIT",
+  "author": "Sergey Kostenchuk",
+  "homepage": "https://github.com/sergekostenchuk/task-plan-v2-dashboard#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sergekostenchuk/task-plan-v2-dashboard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/sergekostenchuk/task-plan-v2-dashboard/issues"
+  },
+  "keywords": [
+    "task-plan",
+    "antigravity",
+    "vscode-extension",
+    "dashboard",
+    "agentic-workflow",
+    "planning",
+    "multi-agent"
+  ],
+  "files": [
+    "FEATURE-PREPARATION.md",
+    "TASK-PLAN.md",
+    "docs/",
+    "examples/agent-bootstrap/",
+    "examples/demo-animated-web.html",
+    "examples/demo-en/",
+    "examples/demo-ru/.task-plan/events.jsonl",
+    "examples/demo-ru/artifacts/",
+    "examples/demo-ru/PICS/",
+    "examples/demo-ru/FEATURE-PREPARATION.md",
+    "examples/demo-ru/README.md",
+    "examples/demo-ru/TASK-PLAN.md",
+    "extension/",
+    "media/",
+    "prompts/",
+    "skills/",
+    "templates/"
+  ],
+  "scripts": {
+    "validate:extension": "node -c extension/task-plan-dashboard/extension.js",
+    "pack:check": "npm pack --dry-run"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

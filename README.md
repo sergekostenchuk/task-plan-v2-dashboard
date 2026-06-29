@@ -10,11 +10,12 @@ This is relevant to Codex-style OSS maintenance because it turns agent work into
 
 ## Quick start
 
-1. Read the English guide: [`docs/en/TASKS-GENERAL-INSTRUCTIONS.md`](./docs/en/TASKS-GENERAL-INSTRUCTIONS.md).
-2. Copy [`templates/TASK-PLAN-v2.template.md`](./templates/TASK-PLAN-v2.template.md) into a project as `TASK-PLAN.md`.
-3. Open one of the demo workspaces in [`examples/`](./examples/) to see a filled plan.
-4. Inspect the dashboard extension source in [`extension/task-plan-dashboard/`](./extension/task-plan-dashboard/).
-5. Use the bootstrap prompts in [`prompts/`](./prompts/) when asking another coding agent to install or fork this package.
+1. Install the package from npm: `npm install task-plan-v2-dashboard`.
+2. Read the English guide: [`docs/en/TASKS-GENERAL-INSTRUCTIONS.md`](./docs/en/TASKS-GENERAL-INSTRUCTIONS.md).
+3. Copy [`templates/TASK-PLAN-v2.template.md`](./templates/TASK-PLAN-v2.template.md) into a project as `TASK-PLAN.md`.
+4. Open one of the demo workspaces in [`examples/`](./examples/) to see a filled plan.
+5. Inspect the dashboard extension source in [`extension/task-plan-dashboard/`](./extension/task-plan-dashboard/).
+6. Use the bootstrap prompts in [`prompts/`](./prompts/) when asking another coding agent to install or fork this package.
 
 Status: public OSS package, documentation-first, with extension packaging and CI planned as next steps.
 
