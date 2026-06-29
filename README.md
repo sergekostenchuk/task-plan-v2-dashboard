@@ -25,6 +25,12 @@ Status: public OSS package, documentation-first, with extension packaging and CI
 - [YouTube demo](https://youtu.be/MJWp7OoApRs)
 - [Repository MP4](./media/task-plan-dashboard-presentation.mp4)
 
+## Dashboard Screenshots
+
+![TASK-PLAN v2 Arena dashboard in English](./media/screenshots/task-plan-v2-arena-en.png)
+
+![TASK-PLAN v2 Arena dashboard in Japanese](./media/screenshots/task-plan-v2-arena-ja.png)
+
 ## Start Here With Any Coding Agent
 
 If you want Codex, Claude Code, Gemini, GLM, Kimi, GitHub Copilot, Qwen, DeepSeek, or a similar coding agent to fork this package or install `TASK-PLAN v2` into your own repository, start with these files:
@@ -66,7 +72,7 @@ This release brings the animated demo experience into the real Antigravity / VS 
 - Agent Arena with animated role cards
 - interactive dependency graph with zoom, pan, fullscreen, and drag controls
 - improved kanban behavior, including newest-first ordering in the done column
-- floating audio drawer with bundled BGM wiring
+- floating audio drawer with bundled BGM wiring and `Load Playlist` upload controls
 - in-panel language switching for `en`, `ru`, `es`, `fr`, `de`, `zh`, and `ja`
 - stage message overlay above the robot area with a close button
 

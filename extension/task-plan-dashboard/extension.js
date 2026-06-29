@@ -130,13 +130,26 @@ function loadDashboardStrings(extensionPath, language) {
   return catalog[language] || catalog.en;
 }
 
-function resolveBundledAudioPath(extensionPath) {
+function resolveBundledAudioPath(extensionPath, planPath) {
   const candidates = [
     path.resolve(extensionPath, "..", "..", "media", DEFAULT_AUDIO_FILE),
     path.join(extensionPath, "media", DEFAULT_AUDIO_FILE)
   ];
 
+  if (planPath) {
+    let currentDir = path.dirname(planPath);
+    while (currentDir && currentDir !== path.dirname(currentDir)) {
+      candidates.push(path.join(currentDir, "media", DEFAULT_AUDIO_FILE));
+      currentDir = path.dirname(currentDir);
+    }
+  }
+
+  const seen = new Set();
   for (const candidate of candidates) {
+    if (seen.has(candidate)) {
+      continue;
+    }
+    seen.add(candidate);
     if (fs.existsSync(candidate)) {
       return candidate;
     }
@@ -741,7 +754,7 @@ class TaskPlanService {
     const nonce = createNonce();
     const ui = model.ui || this.strings.webview;
     const selectedTask = model.tasks.find((task) => task.task_id === selectedTaskId) || model.tasks[0] || null;
-    const bundledAudioPath = resolveBundledAudioPath(this.context.extensionPath);
+    const bundledAudioPath = resolveBundledAudioPath(this.context.extensionPath, model.planPath);
     const bundledBgmUri = bundledAudioPath
       ? webview.asWebviewUri(vscode.Uri.file(bundledAudioPath)).toString()
       : "";

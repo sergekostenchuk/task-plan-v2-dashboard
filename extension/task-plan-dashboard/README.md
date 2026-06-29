@@ -17,6 +17,8 @@ Current implementation notes:
 - supported dashboard locales: `en`, `ru`, `es`, `fr`, `de`, `zh`, `ja`
 - the webview now supports an in-panel language switcher
 - the webview includes a floating audio drawer, bundled BGM wiring, manual task narration, and smarter dependency routing
+- playlist upload now lives inside the floating audio drawer via `Load Playlist`
+- bundled BGM resolves from the extension copy first, then from the nearest parent `media/deep-techno-mix-2026.mp3` next to the active plan workspace
 - demo workspaces are resolved relative to the repository:
   - `../../examples/demo-ru`
   - `../../examples/demo-en`
