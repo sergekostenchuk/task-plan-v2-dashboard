@@ -1147,6 +1147,8 @@ class TaskPlanService {
       padding: 24px;
       width: 100vw;
       height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
 
     .graph-panel.fullscreen-active .graph-canvas-wrap {
@@ -1172,18 +1174,23 @@ class TaskPlanService {
       border-radius: 16px;
       position: relative;
       overflow: hidden;
-      min-height: 320px;
+      height: clamp(420px, 48vh, 620px);
+      min-height: 420px;
       box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
     }
 
     .graph-wrap {
+      width: 100%;
+      height: 100%;
       min-width: 100%;
-      min-height: 320px;
+      min-height: 100%;
     }
 
     .graph-wrap svg {
       display: block;
-      min-width: 100%;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
     }
 
     #graph-svg {
@@ -1191,6 +1198,7 @@ class TaskPlanService {
       height: 100%;
       cursor: grab;
       user-select: none;
+      touch-action: none;
     }
 
     #graph-svg.is-panning {
@@ -1200,6 +1208,10 @@ class TaskPlanService {
     .graph-node {
       cursor: grab;
       transition: filter 0.2s ease;
+    }
+
+    .graph-node text {
+      pointer-events: none;
     }
 
     .graph-node.dragging {
@@ -2269,6 +2281,7 @@ class TaskPlanService {
       activeDragTaskId: null,
       dragOffset: { x: 0, y: 0 },
       panStart: { x: 0, y: 0 },
+      hasFitted: false,
       cleanup: null
     };
     const speechBubbleTimers = {};
@@ -2817,6 +2830,79 @@ class TaskPlanService {
         " C " + cp1x + " " + cp1y + ", " + cp2x + " " + cp2y + ", " + toPort.x + " " + toPort.y;
     }
 
+    function graphViewportSize() {
+      const wrap = document.getElementById("graph-wrap");
+      const rect = wrap ? wrap.getBoundingClientRect() : null;
+      return {
+        width: Math.max(360, Math.round((rect && rect.width) || 1100)),
+        height: Math.max(280, Math.round((rect && rect.height) || 520))
+      };
+    }
+
+    function syncGraphSvgSize() {
+      const svg = document.getElementById("graph-svg");
+      if (!svg) {
+        return graphViewportSize();
+      }
+      const viewport = graphViewportSize();
+      svg.setAttribute("viewBox", "0 0 " + viewport.width + " " + viewport.height);
+      svg.setAttribute("width", String(viewport.width));
+      svg.setAttribute("height", String(viewport.height));
+      return viewport;
+    }
+
+    function graphContentBounds() {
+      const positions = (data.graph.nodes || []).map(function (node) {
+        return nodePosition(node.task_id) || { x: node.x, y: node.y };
+      }).filter(Boolean);
+
+      if (positions.length === 0) {
+        return { minX: 0, minY: 0, maxX: NODE_WIDTH, maxY: NODE_HEIGHT, width: NODE_WIDTH, height: NODE_HEIGHT };
+      }
+
+      const minX = positions.reduce(function (best, position) { return Math.min(best, position.x); }, positions[0].x);
+      const minY = positions.reduce(function (best, position) { return Math.min(best, position.y); }, positions[0].y);
+      const maxX = positions.reduce(function (best, position) { return Math.max(best, position.x + NODE_WIDTH); }, positions[0].x + NODE_WIDTH);
+      const maxY = positions.reduce(function (best, position) { return Math.max(best, position.y + NODE_HEIGHT); }, positions[0].y + NODE_HEIGHT);
+      return {
+        minX,
+        minY,
+        maxX,
+        maxY,
+        width: Math.max(NODE_WIDTH, maxX - minX),
+        height: Math.max(NODE_HEIGHT, maxY - minY)
+      };
+    }
+
+    function fitGraphToViewport() {
+      const group = document.getElementById("graph-viewport-group");
+      if (!group) {
+        return;
+      }
+      const viewport = syncGraphSvgSize();
+      const bounds = graphContentBounds();
+      const padding = 52;
+      const availableWidth = Math.max(160, viewport.width - padding * 2);
+      const availableHeight = Math.max(140, viewport.height - padding * 2);
+      const scale = Math.max(0.36, Math.min(1.12, Math.min(availableWidth / bounds.width, availableHeight / bounds.height)));
+
+      graphState.zoomScale = scale;
+      graphState.panX = Math.round((viewport.width - bounds.width * scale) / 2 - bounds.minX * scale);
+      graphState.panY = Math.round((viewport.height - bounds.height * scale) / 2 - bounds.minY * scale);
+      updateViewportTransform();
+    }
+
+    function graphDragLimits() {
+      const viewport = graphViewportSize();
+      const bounds = graphContentBounds();
+      return {
+        minX: -viewport.width,
+        minY: -viewport.height,
+        maxX: Math.max(viewport.width * 2, bounds.maxX + viewport.width),
+        maxY: Math.max(viewport.height * 2, bounds.maxY + viewport.height)
+      };
+    }
+
     function updateViewportTransform() {
       const group = document.getElementById("graph-viewport-group");
       if (!group) {
@@ -2881,10 +2967,8 @@ class TaskPlanService {
     }
 
     function resetGraphView() {
-      graphState.panX = 0;
-      graphState.panY = 0;
-      graphState.zoomScale = 1;
-      updateViewportTransform();
+      fitGraphToViewport();
+      graphState.hasFitted = true;
     }
 
     function toggleGraphFullscreen() {
@@ -2893,6 +2977,12 @@ class TaskPlanService {
         return;
       }
       panel.classList.toggle("fullscreen-active");
+      window.requestAnimationFrame(function () {
+        window.requestAnimationFrame(function () {
+          fitGraphToViewport();
+          graphState.hasFitted = true;
+        });
+      });
     }
 
     function detachGraphInteractions() {
@@ -2916,8 +3006,9 @@ class TaskPlanService {
           const rect = svg.getBoundingClientRect();
           const mouseX = (event.clientX - rect.left - graphState.panX) / graphState.zoomScale;
           const mouseY = (event.clientY - rect.top - graphState.panY) / graphState.zoomScale;
-          const nextX = Math.max(16, Math.min(2400, mouseX - graphState.dragOffset.x));
-          const nextY = Math.max(16, Math.min(1800, mouseY - graphState.dragOffset.y));
+          const limits = graphDragLimits();
+          const nextX = Math.max(limits.minX, Math.min(limits.maxX, mouseX - graphState.dragOffset.x));
+          const nextY = Math.max(limits.minY, Math.min(limits.maxY, mouseY - graphState.dragOffset.y));
           graphPositions[graphState.activeDragTaskId] = { x: nextX, y: nextY };
           const node = document.querySelector('.graph-node[data-task-id="' + graphState.activeDragTaskId + '"]');
           if (node) {
@@ -2948,8 +3039,7 @@ class TaskPlanService {
       }
 
       function onBackgroundMouseDown(event) {
-        const backgroundHit = event.target.id === "graph-svg" || event.target.closest(".graph-connection-line");
-        if (!backgroundHit) {
+        if (event.button !== 0 || (event.target.closest && event.target.closest(".graph-node"))) {
           return;
         }
         graphState.isPanning = true;
@@ -2974,6 +3064,9 @@ class TaskPlanService {
 
       nodeElements.forEach(function (nodeEl) {
         nodeEl.addEventListener("mousedown", function (event) {
+          if (event.button !== 0) {
+            return;
+          }
           const taskId = nodeEl.dataset.taskId;
           const rect = svg.getBoundingClientRect();
           const position = nodePosition(taskId);
@@ -2989,31 +3082,37 @@ class TaskPlanService {
         });
       });
 
+      function onResize() {
+        syncGraphSvgSize();
+        updateViewportTransform();
+      }
+
       svg.addEventListener("mousedown", onBackgroundMouseDown);
       svg.addEventListener("wheel", onWheel, { passive: false });
       window.addEventListener("mousemove", onMouseMove);
       window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("resize", onResize);
 
       graphState.cleanup = function () {
         svg.removeEventListener("mousedown", onBackgroundMouseDown);
         svg.removeEventListener("wheel", onWheel);
         window.removeEventListener("mousemove", onMouseMove);
         window.removeEventListener("mouseup", onMouseUp);
+        window.removeEventListener("resize", onResize);
       };
 
+      syncGraphSvgSize();
       updateViewportTransform();
       updateGraphLines();
       syncArrowGlows();
+      if (!graphState.hasFitted) {
+        fitGraphToViewport();
+        graphState.hasFitted = true;
+      }
     }
 
     function renderGraph() {
-      const allPositions = (data.graph.nodes || []).map(function (node) {
-        return nodePosition(node.task_id) || { x: node.x, y: node.y };
-      });
-      const maxX = allPositions.reduce(function (best, position) { return Math.max(best, position.x); }, 0);
-      const maxY = allPositions.reduce(function (best, position) { return Math.max(best, position.y); }, 0);
-      const width = Math.max(1100, maxX + NODE_WIDTH + 160);
-      const height = Math.max(520, maxY + NODE_HEIGHT + 160);
+      const viewport = graphViewportSize();
 
       const edges = data.graph.edges.map(function (edge) {
         const fromNode = nodePosition(edge.from);
@@ -3044,12 +3143,14 @@ class TaskPlanService {
       }).join("");
 
       document.getElementById("graph-wrap").innerHTML =
-        '<svg id="graph-svg" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + " " + height + '">' +
+        '<svg id="graph-svg" width="' + viewport.width + '" height="' + viewport.height + '" viewBox="0 0 ' + viewport.width + " " + viewport.height + '" role="img" aria-labelledby="graph-title">' +
           '<defs>' +
+            '<pattern id="graph-grid" width="32" height="32" patternUnits="userSpaceOnUse"><path d="M 32 0 L 0 0 0 32" fill="none" stroke="#1e293b" stroke-opacity="0.28" stroke-width="1"/></pattern>' +
             '<marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 z" fill="#64748b"/></marker>' +
             '<marker id="arrow-active" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 z" fill="#0ea5e9"/></marker>' +
             '<marker id="arrow-alert" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L8,4 L0,8 z" fill="#ef4444"/></marker>' +
           "</defs>" +
+          '<rect width="100%" height="100%" fill="url(#graph-grid)" />' +
           '<g id="graph-viewport-group">' + edges + nodes + "</g>" +
         "</svg>";
 
@@ -4569,9 +4670,29 @@ function buildGraph(tasks) {
     levels.get(level).push(task);
   }
 
+  const levelEntries = [...levels.entries()].sort((a, b) => a[0] - b[0]);
+  const columnCount = Math.min(5, Math.max(3, Math.ceil(Math.sqrt(levelEntries.length * 1.4))));
+  const columnGap = 292;
+  const rowGap = 172;
+  const laneGap = 128;
+  const rowLaneCounts = [];
+  levelEntries.forEach((entry, orderIndex) => {
+    const row = Math.floor(orderIndex / columnCount);
+    rowLaneCounts[row] = Math.max(rowLaneCounts[row] || 1, entry[1].length);
+  });
+
+  const rowOffsets = [];
+  let nextRowY = 30;
+  rowLaneCounts.forEach((laneCount, rowIndex) => {
+    rowOffsets[rowIndex] = nextRowY;
+    nextRowY += Math.max(1, laneCount) * laneGap + rowGap;
+  });
+
   const nodes = [];
   let maxRows = 0;
-  for (const [level, levelTasks] of [...levels.entries()].sort((a, b) => a[0] - b[0])) {
+  for (const [[level, levelTasks], orderIndex] of levelEntries.map((entry, index) => [entry, index])) {
+    const row = Math.floor(orderIndex / columnCount);
+    const column = orderIndex % columnCount;
     maxRows = Math.max(maxRows, levelTasks.length);
     levelTasks.forEach((task, index) => {
       nodes.push({
@@ -4580,8 +4701,8 @@ function buildGraph(tasks) {
         status: task.status,
         owner_role: task.owner_role,
         level,
-        x: 30 + level * 280,
-        y: 30 + index * 120
+        x: 30 + column * columnGap,
+        y: rowOffsets[row] + index * laneGap
       });
     });
   }
