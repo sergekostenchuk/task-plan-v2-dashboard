@@ -461,7 +461,7 @@ class TaskPlanService {
       const localResourceRoots = [
         vscode.Uri.file(this.context.extensionPath)
       ];
-      const bundledAudioPath = resolveBundledAudioPath(this.context.extensionPath);
+      const bundledAudioPath = resolveBundledAudioPath(this.context.extensionPath, this.model.planPath);
       if (bundledAudioPath) {
         localResourceRoots.push(vscode.Uri.file(path.dirname(bundledAudioPath)));
       }
